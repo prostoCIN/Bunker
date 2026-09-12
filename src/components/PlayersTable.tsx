@@ -31,11 +31,18 @@ export function PlayersTable({ room, currentPlayer }: PlayersTableProps) {
             const revealedCards = cards.filter((c) => c.isRevealedToAll);
             const hiddenCount = cards.length - revealedCards.length;
 
+            const isCurrentTurn =
+              room.currentTurnPlayerId === player.id &&
+              room.turnPhase === "presenting" &&
+              !player.isEliminated;
+
             return (
               <div
                 key={player.id}
                 className={`p-4 sm:p-5 rounded-2xl border transition-all ${
-                  isSelf
+                  isCurrentTurn
+                    ? "bg-zinc-900/90 border-amber-500/80 shadow-lg shadow-amber-950/30 ring-1 ring-amber-500/30"
+                    : isSelf
                     ? "bg-zinc-950/60 border-emerald-500/30"
                     : "bg-zinc-950/40 border-zinc-800/50"
                 }`}
@@ -49,6 +56,11 @@ export function PlayersTable({ room, currentPlayer }: PlayersTableProps) {
                     <span className="font-bold text-base text-white">
                       {player.name}
                     </span>
+                  {isCurrentTurn && (
+                    <span className="text-[10px] font-bold text-amber-300 bg-amber-950/90 border border-amber-500/60 px-2 py-0.5 rounded-md animate-pulse">
+                      🎯 Зараз ходить
+                    </span>
+                  )}
                   {isSelf && (
                     <span className="text-[10px] font-bold text-emerald-400 bg-emerald-950/50 border border-emerald-500/30 px-2 py-0.5 rounded-md">
                       Ви

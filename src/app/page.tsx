@@ -315,6 +315,27 @@ function GameApp() {
     }
   };
 
+  // End Turn
+  const handleEndTurn = async () => {
+    if (!currentRoom || !currentPlayer) return;
+    const updated = await roomManager.endTurn(
+      currentRoom.code,
+      currentPlayer.id
+    );
+    if (updated) {
+      handleRoomSync(updated);
+    }
+  };
+
+  // Skip Turn (Host force)
+  const handleSkipTurn = async () => {
+    if (!currentRoom) return;
+    const updated = await roomManager.skipTurn(currentRoom.code);
+    if (updated) {
+      handleRoomSync(updated);
+    }
+  };
+
   // ================= RENDER LOGIC =================
 
   // 1. If in room and game is IN PROGRESS:
@@ -341,6 +362,8 @@ function GameApp() {
         onMakeRpsChoice={handleMakeRpsChoice}
         onApplySpecialAction={handleApplySpecialAction}
         onDismissActionMessage={handleDismissActionMessage}
+        onEndTurn={handleEndTurn}
+        onSkipTurn={handleSkipTurn}
       />
     );
   }

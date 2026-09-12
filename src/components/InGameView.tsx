@@ -17,7 +17,12 @@ import {
   UserX,
   Skull,
   Zap,
-  X
+  X,
+  Scale,
+  Radio,
+  Clock,
+  CheckCircle2,
+  SkipForward
 } from "lucide-react";
 
 interface InGameViewProps {
@@ -33,6 +38,8 @@ interface InGameViewProps {
     targetPlayerId?: string
   ) => Promise<{ peekedCard?: PlayerCharacterCard } | void>;
   onDismissActionMessage?: () => void;
+  onEndTurn?: () => void;
+  onSkipTurn?: () => void;
 }
 
 type TabType = "catastrophe" | "table" | "hand" | "kick";
@@ -47,11 +54,19 @@ export function InGameView({
   onMakeRpsChoice,
   onApplySpecialAction,
   onDismissActionMessage,
+  onEndTurn,
+  onSkipTurn,
 }: InGameViewProps) {
   // Mobile active tab: "catastrophe" | "table" | "hand" | "kick"
   const [activeTab, setActiveTab] = useState<TabType>("hand");
   const [selectedCard, setSelectedCard] = useState<PlayerCharacterCard | null>(null);
   const [isKickModalOpen, setIsKickModalOpen] = useState(false);
+
+  const currentTurnPlayer = room.players.find(
+    (p) => p.id === room.currentTurnPlayerId
+  );
+  const isMyTurn = currentPlayer.id === room.currentTurnPlayerId;
+  const isVotingPhase = room.turnPhase === "voting";
 
   const cards = currentPlayer.cards || [];
   const revealedCount = cards.filter((c) => c.isRevealedToAll).length;
@@ -181,6 +196,106 @@ export function InGameView({
           )}
         </div>
       )}
+
+      {/* Turn System Status & Action Banner */}
+      <div
+        className={`w-full mb-3 p-3 sm:p-4 rounded-2xl border flex flex-col sm:flex-row sm:items-center justify-between gap-3 transition-all shrink-0 ${
+          isVotingPhase
+            ? "bg-purple-950/30 border-purple-500/40 text-purple-200"
+            : isMyTurn
+            ? "bg-emerald-950/40 border-emerald-500/50 text-emerald-200 shadow-lg shadow-emerald-950/20"
+            : "bg-zinc-900/60 border-zinc-800/80 text-zinc-300"
+        }`}
+      >
+        <div className="flex items-center gap-3 min-w-0">
+          <div
+            className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${
+              isVotingPhase
+                ? "bg-purple-500/20 text-purple-400"
+                : isMyTurn
+                ? "bg-emerald-500/20 text-emerald-400 animate-pulse"
+                : "bg-zinc-800 text-zinc-400"
+            }`}
+          >
+            {isVotingPhase ? (
+              <Scale className="w-5 h-5" />
+            ) : isMyTurn ? (
+              <Radio className="w-5 h-5" />
+            ) : (
+              <Clock className="w-5 h-5" />
+            )}
+          </div>
+
+          <div className="min-w-0">
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="text-[11px] font-mono uppercase font-bold tracking-wider px-2 py-0.5 rounded-full bg-black/40 border border-white/10">
+                Раунд #{room.roundNumber ?? 1}
+              </span>
+              <span className="text-xs sm:text-sm font-bold truncate">
+                {isVotingPhase
+                  ? "Фаза голосування за вигнання"
+                  : isMyTurn
+                  ? "Ваш хід! Презентуйте себе"
+                  : `Зараз ходить: #${currentTurnPlayer?.playerNumber ?? "?"} ${
+                      currentTurnPlayer?.name ?? "Гравець"
+                    }`}
+              </span>
+            </div>
+            <p className="text-[11px] sm:text-xs opacity-75 mt-0.5 truncate">
+              {isVotingPhase
+                ? "Всі учасники відкрили карти. Оберіть кандидата у колонці вигнання."
+                : isMyTurn
+                ? room.hasRevealedCardInTurn
+                  ? "Карту відкрито! Розкажіть іншим про свою користь і натисніть «Завершити хід»."
+                  : "Відкрийте хоча б одну карту з руки перед завершенням ходу."
+                : "Гравець виступає перед групою. Дочекайтеся своєї черги."}
+            </p>
+          </div>
+        </div>
+
+        {/* Action Controls for Turn */}
+        <div className="flex items-center gap-2 shrink-0 self-end sm:self-center">
+          {isVotingPhase && (
+            <button
+              onClick={() => setActiveTab("kick")}
+              className="md:hidden px-3.5 py-2 rounded-xl bg-purple-600 hover:bg-purple-500 text-white text-xs font-bold transition cursor-pointer shadow-md shadow-purple-950/40"
+            >
+              До голосування
+            </button>
+          )}
+
+          {isMyTurn && !isVotingPhase && (
+            <button
+              onClick={onEndTurn}
+              disabled={!room.hasRevealedCardInTurn}
+              title={
+                !room.hasRevealedCardInTurn
+                  ? "Спочатку відкрийте карту з руки"
+                  : "Завершити свій виступ і передати хід далі"
+              }
+              className={`px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-1.5 cursor-pointer ${
+                room.hasRevealedCardInTurn
+                  ? "bg-emerald-500 hover:bg-emerald-400 text-black shadow-md shadow-emerald-500/20 active:scale-98"
+                  : "bg-zinc-800/80 text-zinc-500 cursor-not-allowed opacity-60 border border-zinc-700/50"
+              }`}
+            >
+              <CheckCircle2 className="w-4 h-4" />
+              <span>Завершити хід</span>
+            </button>
+          )}
+
+          {!isMyTurn && !isVotingPhase && currentPlayer.isHost && onSkipTurn && (
+            <button
+              onClick={onSkipTurn}
+              title="Хост може передати хід наступному гравцю, якщо цей гравець не відповідає"
+              className="px-3 py-1.5 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-zinc-300 hover:text-white text-xs font-medium border border-zinc-700/60 transition flex items-center gap-1.5 cursor-pointer"
+            >
+              <SkipForward className="w-3.5 h-3.5 text-amber-400" />
+              <span>Пропустити хід</span>
+            </button>
+          )}
+        </div>
+      </div>
 
       {/* ================= 1. MOBILE VIEW (<md, <768px): 4 TABS ================= */}
       <div className="md:hidden flex flex-col flex-1">

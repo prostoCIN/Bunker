@@ -53,4 +53,8 @@ export interface GameRoom {
   lastActionMessage?: string;
   doorsLocked?: boolean;
   extraBunkerSpots?: number;
+  roundNumber?: number;
+  currentTurnPlayerId?: string;
+  turnPhase?: "presenting" | "voting";
+  hasRevealedCardInTurn?: boolean;
 }

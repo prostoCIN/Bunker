@@ -60,6 +60,22 @@ export class RoomManager {
       catastrophe._extraBunkerSpots !== undefined
         ? catastrophe._extraBunkerSpots
         : raw.extraBunkerSpots;
+    const roundNumber =
+      catastrophe._roundNumber !== undefined
+        ? catastrophe._roundNumber
+        : raw.roundNumber;
+    const currentTurnPlayerId =
+      catastrophe._currentTurnPlayerId !== undefined
+        ? catastrophe._currentTurnPlayerId
+        : raw.currentTurnPlayerId;
+    const turnPhase =
+      catastrophe._turnPhase !== undefined
+        ? catastrophe._turnPhase
+        : raw.turnPhase;
+    const hasRevealedCardInTurn =
+      catastrophe._hasRevealedCardInTurn !== undefined
+        ? catastrophe._hasRevealedCardInTurn
+        : raw.hasRevealedCardInTurn;
 
     // Clean internal metadata from catastrophe object so it doesn't pollute UI
     const cleanCatastrophe = { ...catastrophe };
@@ -69,6 +85,10 @@ export class RoomManager {
     delete cleanCatastrophe._lastActionMessage;
     delete cleanCatastrophe._doorsLocked;
     delete cleanCatastrophe._extraBunkerSpots;
+    delete cleanCatastrophe._roundNumber;
+    delete cleanCatastrophe._currentTurnPlayerId;
+    delete cleanCatastrophe._turnPhase;
+    delete cleanCatastrophe._hasRevealedCardInTurn;
 
     return {
       ...raw,
@@ -80,6 +100,10 @@ export class RoomManager {
       lastActionMessage: lastActionMessage || undefined,
       doorsLocked: doorsLocked || undefined,
       extraBunkerSpots: extraBunkerSpots || undefined,
+      roundNumber: typeof roundNumber === "number" ? roundNumber : 1,
+      currentTurnPlayerId: currentTurnPlayerId || undefined,
+      turnPhase: turnPhase || "presenting",
+      hasRevealedCardInTurn: Boolean(hasRevealedCardInTurn),
     };
   }
 
@@ -330,11 +354,22 @@ export class RoomManager {
       hasSecondChanceDuel: false,
       hasLastBullet: false,
     }));
+    const sortedAlive = [...room.players].sort(
+      (a, b) => (a.playerNumber || 0) - (b.playerNumber || 0)
+    );
+    const firstPlayer = sortedAlive[0];
+
     room.status = "in_game";
+    room.roundNumber = 1;
+    room.turnPhase = "presenting";
+    room.currentTurnPlayerId = firstPlayer ? firstPlayer.id : undefined;
+    room.hasRevealedCardInTurn = false;
     room.votes = {};
     delete room.rpsDuel;
     delete room.lastExpelledName;
-    delete room.lastActionMessage;
+    room.lastActionMessage = firstPlayer
+      ? `🏁 Гра розпочалася! Раунд 1. Першим ходить #${firstPlayer.playerNumber} ${firstPlayer.name}.`
+      : undefined;
     delete room.doorsLocked;
     delete room.extraBunkerSpots;
 
@@ -362,6 +397,75 @@ export class RoomManager {
       }
       return p;
     });
+
+    if (playerId === room.currentTurnPlayerId) {
+      room.hasRevealedCardInTurn = true;
+    }
+
+    await this.updateRoom(room);
+    return room;
+  }
+
+  async endTurn(code: string, playerId: string): Promise<GameRoom | null> {
+    const cleanCode = code.trim().toUpperCase();
+    const room = await this.getRoom(cleanCode);
+    if (!room || room.status !== "in_game") return null;
+
+    if (room.currentTurnPlayerId !== playerId) {
+      return room;
+    }
+
+    const alivePlayers = room.players
+      .filter((p) => !p.isEliminated)
+      .sort((a, b) => (a.playerNumber || 0) - (b.playerNumber || 0));
+
+    if (alivePlayers.length === 0) return room;
+
+    const currentIdx = alivePlayers.findIndex((p) => p.id === playerId);
+    const nextIdx = currentIdx + 1;
+
+    if (nextIdx < alivePlayers.length) {
+      const nextPlayer = alivePlayers[nextIdx];
+      room.currentTurnPlayerId = nextPlayer.id;
+      room.hasRevealedCardInTurn = false;
+      room.lastActionMessage = `🎯 Черга перейшла до гравця #${nextPlayer.playerNumber} ${nextPlayer.name}! (Раунд ${room.roundNumber || 1})`;
+    } else {
+      room.turnPhase = "voting";
+      room.currentTurnPlayerId = undefined;
+      room.hasRevealedCardInTurn = false;
+      room.lastActionMessage = `⚖️ Усі гравці виступили в Раунді ${room.roundNumber || 1}! Відкривається загальне голосування за вигнання.`;
+    }
+
+    await this.updateRoom(room);
+    return room;
+  }
+
+  async skipTurn(code: string): Promise<GameRoom | null> {
+    const cleanCode = code.trim().toUpperCase();
+    const room = await this.getRoom(cleanCode);
+    if (!room || room.status !== "in_game" || !room.currentTurnPlayerId) return null;
+
+    const currentId = room.currentTurnPlayerId;
+    const currentP = room.players.find((p) => p.id === currentId);
+
+    const alivePlayers = room.players
+      .filter((p) => !p.isEliminated)
+      .sort((a, b) => (a.playerNumber || 0) - (b.playerNumber || 0));
+
+    const currentIdx = alivePlayers.findIndex((p) => p.id === currentId);
+    const nextIdx = currentIdx + 1;
+
+    if (nextIdx < alivePlayers.length) {
+      const nextPlayer = alivePlayers[nextIdx];
+      room.currentTurnPlayerId = nextPlayer.id;
+      room.hasRevealedCardInTurn = false;
+      room.lastActionMessage = `⏩ Хід гравця #${currentP?.playerNumber ?? "?"} ${currentP?.name} пропущено хостом. Черга перейшла до #${nextPlayer.playerNumber} ${nextPlayer.name}!`;
+    } else {
+      room.turnPhase = "voting";
+      room.currentTurnPlayerId = undefined;
+      room.hasRevealedCardInTurn = false;
+      room.lastActionMessage = `⚖️ Усі гравці виступили в Раунді ${room.roundNumber || 1}! Відкривається загальне голосування за вигнання.`;
+    }
 
     await this.updateRoom(room);
     return room;
@@ -461,9 +565,19 @@ export class RoomManager {
             room.lastExpelledName = `${expelled.playerNumber ? `#${expelled.playerNumber} ` : ""}${expelled.name}`;
           }
         }
-        // RESET VOTES FOR ALL PLAYERS
+        // RESET VOTES FOR ALL PLAYERS AND START NEXT ROUND
         room.votes = {};
         room.players = room.players.map((p) => ({ ...p, votedFor: undefined }));
+
+        const nextRound = (room.roundNumber || 1) + 1;
+        room.roundNumber = nextRound;
+        room.turnPhase = "presenting";
+        const remainingAlive = room.players
+          .filter((p) => !p.isEliminated)
+          .sort((a, b) => (a.playerNumber || 0) - (b.playerNumber || 0));
+        const firstPlayerNextRound = remainingAlive[0];
+        room.currentTurnPlayerId = firstPlayerNextRound ? firstPlayerNextRound.id : undefined;
+        room.hasRevealedCardInTurn = false;
       } else if (topCandidates.length >= 2) {
         // TIE! Launch Rock-Paper-Scissors duel between tied candidates
         const p1 = room.players.find((p) => p.id === topCandidates[0]);
@@ -545,10 +659,20 @@ export class RoomManager {
           room.lastExpelledName = `${loserLabel} (програв дуель: ${winChoice} від ${winnerLabel} проти ${loseChoice})`;
         }
 
-        // Reset votes & remove duel
+        // Reset votes & remove duel, advance round
         room.votes = {};
         room.players = room.players.map((p) => ({ ...p, votedFor: undefined }));
         delete room.rpsDuel;
+
+        const nextRound = (room.roundNumber || 1) + 1;
+        room.roundNumber = nextRound;
+        room.turnPhase = "presenting";
+        const remainingAlive = room.players
+          .filter((p) => !p.isEliminated)
+          .sort((a, b) => (a.playerNumber || 0) - (b.playerNumber || 0));
+        const firstPlayerNextRound = remainingAlive[0];
+        room.currentTurnPlayerId = firstPlayerNextRound ? firstPlayerNextRound.id : undefined;
+        room.hasRevealedCardInTurn = false;
       }
     }
 
@@ -883,6 +1007,10 @@ export class RoomManager {
           _lastActionMessage: normalized.lastActionMessage || null,
           _doorsLocked: normalized.doorsLocked || false,
           _extraBunkerSpots: normalized.extraBunkerSpots || 0,
+          _roundNumber: normalized.roundNumber || 1,
+          _currentTurnPlayerId: normalized.currentTurnPlayerId || null,
+          _turnPhase: normalized.turnPhase || "presenting",
+          _hasRevealedCardInTurn: normalized.hasRevealedCardInTurn || false,
         };
 
         await supabase

@@ -2,7 +2,7 @@
 
 import React, { useState } from "react";
 import { GameRoom, Player } from "@/types/game";
-import { LogOut, X } from "lucide-react";
+import { LogOut, X, Lock } from "lucide-react";
 
 interface KickColumnProps {
   room: GameRoom;
@@ -24,6 +24,11 @@ export function KickColumn({
   const votedCount = activePlayers.filter((p) => votes[p.id]).length;
   const totalActive = activePlayers.length;
 
+  const isVotingPhase = room.turnPhase === "voting";
+  const currentTurnPlayer = room.currentTurnPlayerId
+    ? room.players.find((p) => p.id === room.currentTurnPlayerId)
+    : null;
+
   const myVoteTargetId = votes[currentPlayer.id];
   const myVoteTargetPlayer = myVoteTargetId
     ? room.players.find((p) => p.id === myVoteTargetId)
@@ -42,43 +47,72 @@ export function KickColumn({
 
       {/* Spacious Status Info */}
       <div className="w-full flex-1 flex flex-col justify-center items-center text-center my-6">
-        <div className="flex flex-col items-center">
-          <div className="text-4xl xl:text-5xl font-mono font-black text-white tracking-tight">
-            {votedCount}
-            <span className="text-zinc-500 text-2xl font-light ml-1">
-              / {totalActive}
+        {!isVotingPhase ? (
+          <div className="flex flex-col items-center max-w-xs px-2 animate-in fade-in duration-200">
+            <div className="w-12 h-12 rounded-2xl bg-zinc-950/80 border border-zinc-800 text-amber-400 flex items-center justify-center mb-3 shadow-inner">
+              <Lock className="w-6 h-6 text-amber-400" />
+            </div>
+            <span className="text-xs font-mono uppercase tracking-widest text-amber-400 font-bold mb-1">
+              Раунд #{room.roundNumber || 1} // Черга ходів
             </span>
+            <h3 className="text-sm font-semibold text-white mb-2">
+              Голосування заблоковано
+            </h3>
+            <p className="text-xs text-zinc-400 leading-relaxed">
+              {currentTurnPlayer ? (
+                <>Зараз черга виступу: <b className="text-zinc-200">#{currentTurnPlayer.playerNumber} {currentTurnPlayer.name}</b>. Голосування відкриється, коли всі завершать хід.</>
+              ) : (
+                "Гравці роблять ходи по черзі. Голосування відкриється після завершення кола виступів."
+              )}
+            </p>
           </div>
-
-          <span className="text-xs text-zinc-400 font-medium mt-1">
-            {votedCount === totalActive ? "Всі проголосували" : "учасників проголосувало"}
-          </span>
-
-          {/* Clean Choice Tag */}
-          {hasVoted && myVoteTargetPlayer && (
-            <div className="mt-5 text-xs text-zinc-400 bg-zinc-950/60 border border-zinc-800/60 px-3.5 py-1.5 rounded-full">
-              Ваш голос:{" "}
-              <span className="text-white font-semibold">
-                {myVoteTargetPlayer.playerNumber ? `#${myVoteTargetPlayer.playerNumber} ` : ""}
-                {myVoteTargetPlayer.name}
+        ) : (
+          <div className="flex flex-col items-center animate-in fade-in duration-200">
+            <div className="text-4xl xl:text-5xl font-mono font-black text-white tracking-tight">
+              {votedCount}
+              <span className="text-zinc-500 text-2xl font-light ml-1">
+                / {totalActive}
               </span>
             </div>
-          )}
-        </div>
+
+            <span className="text-xs text-zinc-400 font-medium mt-1">
+              {votedCount === totalActive ? "Всі проголосували" : "учасників проголосувало"}
+            </span>
+
+            {/* Clean Choice Tag */}
+            {hasVoted && myVoteTargetPlayer && (
+              <div className="mt-5 text-xs text-zinc-400 bg-zinc-950/60 border border-zinc-800/60 px-3.5 py-1.5 rounded-full">
+                Ваш голос:{" "}
+                <span className="text-white font-semibold">
+                  {myVoteTargetPlayer.playerNumber ? `#${myVoteTargetPlayer.playerNumber} ` : ""}
+                  {myVoteTargetPlayer.name}
+                </span>
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Actions */}
       <div className="w-full space-y-2.5 shrink-0">
         <button
           onClick={onKickClick}
-          disabled={currentPlayer.isEliminated}
+          disabled={currentPlayer.isEliminated || !isVotingPhase || Boolean(currentPlayer.cannotVote)}
           className={`w-full py-3.5 px-4 text-white font-bold text-xs uppercase tracking-wider rounded-xl transition-all cursor-pointer shadow-lg ${
-            hasVoted
+            !isVotingPhase || Boolean(currentPlayer.cannotVote)
+              ? "bg-zinc-800/50 border border-zinc-800 text-zinc-500 cursor-not-allowed"
+              : hasVoted
               ? "bg-zinc-800 hover:bg-zinc-700 text-zinc-200"
               : "bg-red-600 hover:bg-red-500 shadow-red-950/40"
           }`}
         >
-          {hasVoted ? "Змінити свій голос" : "Вигнати з черги"}
+          {!isVotingPhase
+            ? "Очікування завершення черги"
+            : currentPlayer.cannotVote
+            ? "Ви позбавлені права голосу"
+            : hasVoted
+            ? "Змінити свій голос"
+            : "Вигнати з черги"}
         </button>
 
         <button
