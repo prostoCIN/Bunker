@@ -37,11 +37,11 @@ export function KickModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-150">
-      <div className="w-full max-w-sm bg-zinc-900 border border-zinc-800 rounded-3xl p-5 sm:p-6 shadow-2xl relative animate-in zoom-in-95 duration-150">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 animate-modal-backdrop">
+      <div className="w-full max-w-sm bg-zinc-900 border border-zinc-800 rounded-3xl p-5 sm:p-6 shadow-2xl relative animate-modal-sway animate-gentle-float">
         <button
           onClick={onClose}
-          className="absolute top-4 right-4 text-zinc-400 hover:text-white p-1 rounded-full bg-zinc-800 cursor-pointer"
+          className="absolute top-4 right-4 text-zinc-400 hover:text-white p-1 rounded-full bg-zinc-800 hover:scale-110 active:scale-95 transition-transform cursor-pointer"
         >
           <X className="w-4 h-4" />
         </button>
@@ -67,14 +67,14 @@ export function KickModal({
               <button
                 key={player.id}
                 onClick={() => handleVote(player.id)}
-                className={`w-full p-3 rounded-2xl border text-left flex items-center justify-between transition-all cursor-pointer ${
+                className={`group w-full p-3 rounded-2xl border text-left flex items-center justify-between transition-all duration-150 cursor-pointer hover:translate-x-1.5 hover:scale-[1.015] active:scale-98 ${
                   isVoted || isSelected
-                    ? "bg-red-950/40 border-red-500/70 text-white"
-                    : "bg-zinc-950/60 border-zinc-800 text-zinc-300 hover:border-zinc-700 hover:text-white"
+                    ? "bg-red-950/40 border-red-500/70 text-white shadow-lg shadow-red-950/40"
+                    : "bg-zinc-950/60 border-zinc-800 text-zinc-300 hover:border-red-500/40 hover:bg-red-950/20 hover:text-white"
                 }`}
               >
                 <div className="flex items-center gap-2.5 min-w-0">
-                  <span className="font-mono font-bold text-xs bg-zinc-800 text-zinc-300 px-2 py-0.5 rounded-lg shrink-0">
+                  <span className="text-xs font-mono font-bold text-zinc-300 bg-zinc-800/80 border border-zinc-700/50 px-2 py-0.5 rounded-lg shrink-0">
                     #{player.playerNumber ?? 1}
                   </span>
                   <span className="font-semibold text-sm truncate">
@@ -88,7 +88,7 @@ export function KickModal({
                 </div>
 
                 <div className="flex items-center gap-2 shrink-0">
-                  <span className="text-[11px] font-mono text-zinc-500">
+                  <span className="text-[11px] font-mono font-medium text-zinc-400 bg-zinc-800/60 border border-zinc-700/40 px-2 py-0.5 rounded-full shrink-0">
                     {revealedCards.length} відкр.
                   </span>
                   {(isVoted || isSelected) && (

@@ -104,7 +104,7 @@ export function CardViewScreen({
       <div className="w-full flex items-center justify-between mb-3">
         <button
           onClick={onBack}
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 text-zinc-300 hover:text-white transition-colors text-xs font-semibold cursor-pointer active:scale-95"
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 text-zinc-300 hover:text-white hover:-translate-x-0.5 transition-all text-xs font-semibold cursor-pointer active:scale-95"
         >
           <ArrowLeft className="w-4 h-4" />
           <span>Назад</span>
@@ -125,12 +125,12 @@ export function CardViewScreen({
       <div className="w-full my-auto flex flex-col items-center">
         <div
           onClick={() => setIsFlipped(!isFlipped)}
-          className={`w-full max-w-xs sm:max-w-sm aspect-[3/4.2] rounded-3xl p-6 sm:p-7 transition-all duration-300 shadow-2xl flex flex-col justify-between relative border cursor-pointer select-none ${
+          className={`w-full max-w-xs sm:max-w-sm aspect-[3/4.2] rounded-3xl p-6 sm:p-7 transition-all duration-300 shadow-2xl flex flex-col justify-between relative border cursor-pointer select-none hover:-translate-y-1 hover:scale-[1.015] active:scale-[0.99] ${
             isFlipped
               ? isSpecial
-                ? "bg-zinc-950 border-amber-500/60 shadow-amber-950/20"
-                : "bg-zinc-950 border-zinc-700 shadow-black"
-              : "bg-zinc-900 border-zinc-800 shadow-black"
+                ? "bg-zinc-950 border-amber-500/60 shadow-amber-950/20 hover:border-amber-400/80 hover:shadow-amber-500/10"
+                : "bg-zinc-950 border-zinc-700 shadow-black hover:border-zinc-500 hover:shadow-zinc-900/40"
+              : "bg-zinc-900 border-zinc-800 shadow-black hover:border-zinc-700 hover:shadow-zinc-950/60"
           }`}
         >
           {/* ================= СОРОЧКА КАРТКИ (РУБАШКА) ================= */}
@@ -198,7 +198,7 @@ export function CardViewScreen({
         {/* Кнопка 1: Перевернути картку (сорочка/вміст) */}
         <button
           onClick={() => setIsFlipped(!isFlipped)}
-          className="w-full py-3 px-4 rounded-xl font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-2 bg-zinc-900 hover:bg-zinc-800 text-zinc-200 border border-zinc-800 active:scale-98 transition-all cursor-pointer"
+          className="w-full py-3 px-4 rounded-xl font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-2 bg-zinc-900 hover:bg-zinc-800 hover:border-zinc-700 hover:-translate-y-0.5 text-zinc-200 border border-zinc-800 active:translate-y-0.5 active:scale-98 transition-all cursor-pointer shadow-sm"
         >
           {isFlipped ? (
             <>
@@ -221,7 +221,7 @@ export function CardViewScreen({
             className={`w-full py-3.5 px-4 rounded-xl font-black text-xs uppercase tracking-wider flex items-center justify-center gap-2 transition-all active:scale-98 cursor-pointer shadow-lg ${
               card.isUsed
                 ? "bg-zinc-900 border border-zinc-800 text-zinc-500 cursor-not-allowed"
-                : "bg-gradient-to-r from-amber-500 via-orange-500 to-amber-600 hover:from-amber-400 hover:to-orange-500 text-zinc-950 shadow-amber-950/50"
+                : "bg-gradient-to-r from-amber-500 via-orange-500 to-amber-600 hover:from-amber-400 hover:to-orange-500 hover:-translate-y-0.5 hover:shadow-xl hover:shadow-amber-500/20 active:translate-y-0.5 text-zinc-950 shadow-amber-950/50"
             }`}
           >
             {card.isUsed ? (
@@ -244,7 +244,7 @@ export function CardViewScreen({
             className={`w-full py-3 px-4 rounded-xl font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-2 transition-all active:scale-98 cursor-pointer ${
               card.isRevealedToAll
                 ? "bg-zinc-900 border border-zinc-800 text-zinc-500 cursor-not-allowed"
-                : "bg-emerald-600 hover:bg-emerald-500 text-white shadow-lg shadow-emerald-950/40"
+                : "bg-emerald-600 hover:bg-emerald-500 hover:-translate-y-0.5 hover:shadow-xl hover:shadow-emerald-950/60 active:translate-y-0.5 text-white shadow-lg shadow-emerald-950/40"
             }`}
           >
             {card.isRevealedToAll ? (
@@ -264,11 +264,11 @@ export function CardViewScreen({
 
       {/* ================= MODAL 1: SELECT TARGET PLAYER ================= */}
       {showTargetModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-sm animate-in fade-in duration-150">
-          <div className="w-full max-w-sm bg-zinc-900 border border-zinc-800 rounded-3xl p-5 shadow-2xl relative text-left animate-in zoom-in-95 duration-150">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-sm animate-modal-backdrop">
+          <div className="w-full max-w-sm bg-zinc-900 border border-zinc-800 rounded-3xl p-5 shadow-2xl relative text-left animate-modal-sway animate-gentle-float">
             <button
               onClick={() => setShowTargetModal(false)}
-              className="absolute top-4 right-4 text-zinc-400 hover:text-white p-1 rounded-full bg-zinc-800 cursor-pointer"
+              className="absolute top-4 right-4 text-zinc-400 hover:text-white p-1 rounded-full bg-zinc-800 hover:bg-zinc-700 cursor-pointer active:scale-95 transition-all"
             >
               <X className="w-5 h-5" />
             </button>
@@ -289,10 +289,10 @@ export function CardViewScreen({
                 <button
                   key={target.id}
                   onClick={() => setSelectedTargetId(target.id)}
-                  className={`w-full p-3 rounded-2xl border text-left transition-all cursor-pointer flex items-center justify-between ${
+                  className={`w-full p-3 rounded-2xl border text-left transition-all cursor-pointer flex items-center justify-between hover:translate-x-1 hover:scale-[1.01] active:scale-[0.99] ${
                     selectedTargetId === target.id
-                      ? "bg-amber-950/60 border-amber-500 text-white shadow-md"
-                      : "bg-zinc-950/60 border-zinc-800/80 text-zinc-300 hover:border-zinc-700"
+                      ? "bg-amber-950/60 border-amber-500 text-white shadow-md shadow-amber-950/30"
+                      : "bg-zinc-950/60 border-zinc-800/80 text-zinc-300 hover:border-zinc-700 hover:bg-zinc-950"
                   }`}
                 >
                   <div className="flex items-center gap-2.5">
@@ -319,13 +319,13 @@ export function CardViewScreen({
                   setShowConfirmModal(true);
                 }}
                 disabled={!selectedTargetId}
-                className="flex-1 py-3 bg-amber-500 hover:bg-amber-400 disabled:opacity-50 text-zinc-950 font-black text-xs uppercase tracking-wider rounded-xl transition-all cursor-pointer shadow-lg"
+                className="flex-1 py-3 bg-amber-500 hover:bg-amber-400 disabled:opacity-50 text-zinc-950 font-black text-xs uppercase tracking-wider rounded-xl transition-all cursor-pointer shadow-lg hover:-translate-y-0.5 active:translate-y-0.5 active:scale-98"
               >
                 Далі (Підтвердження)
               </button>
               <button
                 onClick={() => setShowTargetModal(false)}
-                className="py-3 px-4 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 font-bold text-xs uppercase tracking-wider rounded-xl transition-all cursor-pointer"
+                className="py-3 px-4 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 font-bold text-xs uppercase tracking-wider rounded-xl transition-all cursor-pointer active:scale-95"
               >
                 Скасувати
               </button>
@@ -336,8 +336,8 @@ export function CardViewScreen({
 
       {/* ================= MODAL 2: CONFIRMATION BEFORE APPLYING ================= */}
       {showConfirmModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-sm animate-in fade-in duration-150">
-          <div className="w-full max-w-sm bg-zinc-900 border border-zinc-800 rounded-3xl p-6 shadow-2xl relative text-center animate-in zoom-in-95 duration-150">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-sm animate-modal-backdrop">
+          <div className="w-full max-w-sm bg-zinc-900 border border-zinc-800 rounded-3xl p-6 shadow-2xl relative text-center animate-modal-sway animate-gentle-float">
             <div className="w-14 h-14 rounded-2xl bg-amber-950/80 border border-amber-500/80 text-amber-400 flex items-center justify-center mx-auto mb-3 shadow-inner">
               <Zap className="w-7 h-7 animate-pulse" />
             </div>
@@ -364,7 +364,7 @@ export function CardViewScreen({
               <button
                 onClick={handleConfirmApply}
                 disabled={isApplying}
-                className="w-full py-3.5 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-zinc-950 font-black text-xs uppercase tracking-wider rounded-xl shadow-lg transition-all active:scale-98 cursor-pointer flex items-center justify-center gap-2"
+                className="w-full py-3.5 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-zinc-950 font-black text-xs uppercase tracking-wider rounded-xl shadow-lg transition-all active:scale-98 cursor-pointer flex items-center justify-center gap-2 hover:-translate-y-0.5 active:translate-y-0.5"
               >
                 <Check className="w-4 h-4" />
                 <span>{isApplying ? "Застосування..." : "Так, виконати дію"}</span>
@@ -376,7 +376,7 @@ export function CardViewScreen({
                   if (isTargeted) setShowTargetModal(true);
                 }}
                 disabled={isApplying}
-                className="w-full py-2.5 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 font-bold text-xs uppercase tracking-wider rounded-xl transition-all cursor-pointer"
+                className="w-full py-2.5 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 font-bold text-xs uppercase tracking-wider rounded-xl transition-all cursor-pointer active:scale-98"
               >
                 Скасувати
               </button>
@@ -387,8 +387,8 @@ export function CardViewScreen({
 
       {/* ================= MODAL 3: PEEKED CARD POPUP (ШПИГУНСЬКИЙ ПОГЛЯД) ================= */}
       {peekedCard && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/90 backdrop-blur-md animate-in fade-in duration-150">
-          <div className="w-full max-w-sm bg-zinc-900 border-2 border-indigo-500/80 rounded-3xl p-6 shadow-2xl relative text-center animate-in zoom-in-95 duration-150">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/90 backdrop-blur-md animate-modal-backdrop">
+          <div className="w-full max-w-sm bg-zinc-900 border-2 border-indigo-500/80 rounded-3xl p-6 shadow-2xl relative text-center animate-modal-sway animate-gentle-float">
             <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-indigo-950/80 border border-indigo-500 text-indigo-300 text-xs font-mono font-bold uppercase mb-3">
               <Eye className="w-3.5 h-3.5" />
               <span>Шпигунський погляд</span>
@@ -424,7 +424,7 @@ export function CardViewScreen({
 
             <button
               onClick={() => setPeekedCard(null)}
-              className="w-full py-3 bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs uppercase tracking-wider rounded-xl transition-all cursor-pointer"
+              className="w-full py-3 bg-indigo-600 hover:bg-indigo-500 hover:-translate-y-0.5 active:translate-y-0.5 active:scale-98 text-white font-bold text-xs uppercase tracking-wider rounded-xl transition-all cursor-pointer shadow-lg shadow-indigo-950/50"
             >
               Зрозуміло (Закрити)
             </button>

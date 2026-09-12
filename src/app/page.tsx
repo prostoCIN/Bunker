@@ -406,10 +406,10 @@ function GameApp() {
 
   // 3. First Screen (Home)
   return (
-    <div className="w-full max-w-sm mx-auto flex-1 flex flex-col justify-between items-center py-4 sm:py-6 h-full min-h-0 overflow-y-auto custom-scrollbar">
+    <div className="w-full max-w-sm mx-auto flex-1 flex flex-col justify-between items-center py-4 sm:py-6 h-full min-h-0 overflow-y-auto custom-scrollbar animate-in fade-in duration-300">
       {/* Brand Header */}
       <div className="w-full flex flex-col items-center text-center mt-2 sm:mt-4">
-        <h1 className="text-4xl sm:text-5xl font-black tracking-tight text-white uppercase">
+        <h1 className="text-4xl sm:text-5xl font-black tracking-tight text-white uppercase select-none">
           БУНКЕР
         </h1>
         <p className="text-sm text-zinc-400 mt-2.5 max-w-xs leading-relaxed">
@@ -418,7 +418,7 @@ function GameApp() {
       </div>
 
       {/* Center: Player Name Card */}
-      <div className="w-full bg-zinc-900/60 border border-zinc-800/80 rounded-3xl p-6 shadow-xl my-auto space-y-3">
+      <div className="w-full bg-zinc-900/60 border border-zinc-800/80 hover:border-zinc-700/70 rounded-3xl p-6 shadow-xl my-auto space-y-3 transition-all duration-200">
         <label className="text-xs font-mono uppercase tracking-wider text-zinc-500 block">
           Ваше ім&apos;я
         </label>
@@ -434,9 +434,9 @@ function GameApp() {
           <button
             onClick={handleRandomizeName}
             title="Згенерувати випадкове ім'я"
-            className="p-3 bg-zinc-800/80 hover:bg-zinc-800 border border-zinc-700/60 rounded-xl text-zinc-300 hover:text-white transition-colors active:scale-95 cursor-pointer"
+            className="p-3 bg-zinc-800/80 hover:bg-zinc-800 hover:-translate-y-0.5 border border-zinc-700/60 rounded-xl text-zinc-300 hover:text-white transition-all active:rotate-45 active:scale-95 cursor-pointer shadow-sm group"
           >
-            <Dices className="w-5 h-5" />
+            <Dices className="w-5 h-5 group-hover:rotate-12 transition-transform duration-200" />
           </button>
         </div>
       </div>
@@ -447,7 +447,7 @@ function GameApp() {
         <button
           onClick={handleCreateLobby}
           disabled={isLoading}
-          className="w-full py-4 px-6 bg-white hover:bg-zinc-200 disabled:opacity-50 text-zinc-950 font-bold text-sm uppercase tracking-wider rounded-2xl flex items-center justify-center gap-2 shadow-lg active:scale-98 transition-all cursor-pointer"
+          className="w-full py-4 px-6 bg-white hover:bg-zinc-200 disabled:opacity-50 text-zinc-950 font-bold text-sm uppercase tracking-wider rounded-2xl flex items-center justify-center gap-2 shadow-lg hover:shadow-2xl hover:shadow-white/10 hover:-translate-y-0.5 active:translate-y-0.5 active:scale-98 transition-all cursor-pointer"
         >
           {isLoading ? (
             <Loader2 className="w-5 h-5 animate-spin" />
@@ -466,7 +466,7 @@ function GameApp() {
             setIsJoinModalOpen(true);
           }}
           disabled={isLoading}
-          className="w-full py-4 px-6 bg-zinc-900 hover:bg-zinc-800 disabled:opacity-50 border border-zinc-800 text-white font-semibold text-sm uppercase tracking-wider rounded-2xl flex items-center justify-center gap-2 active:scale-98 transition-all cursor-pointer"
+          className="w-full py-4 px-6 bg-zinc-900 hover:bg-zinc-800 hover:border-zinc-700 hover:shadow-xl hover:shadow-black/50 disabled:opacity-50 border border-zinc-800 text-white font-semibold text-sm uppercase tracking-wider rounded-2xl flex items-center justify-center gap-2 hover:-translate-y-0.5 active:translate-y-0.5 active:scale-98 transition-all cursor-pointer"
         >
           <LogIn className="w-5 h-5 text-zinc-400" />
           <span>Увійти за кодом</span>

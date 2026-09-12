@@ -29,8 +29,8 @@ export function RpsDuelModal({
   const p2Chosen = Boolean(duel.choices[duel.player2Id]);
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/90 backdrop-blur-md animate-in fade-in duration-200">
-      <div className="w-full max-w-md bg-gradient-to-b from-zinc-900 to-zinc-950 border-2 border-amber-500/80 rounded-3xl p-6 text-center shadow-2xl shadow-amber-950/40 relative overflow-hidden">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/90 animate-modal-backdrop">
+      <div className="w-full max-w-md bg-gradient-to-b from-zinc-900 to-zinc-950 border-2 border-amber-500/80 rounded-3xl p-6 text-center shadow-2xl shadow-amber-950/40 relative overflow-hidden animate-modal-sway animate-subtle-sway">
         {/* Top Hazard Line */}
         <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-red-600 via-yellow-500 to-red-600" />
 
@@ -90,9 +90,9 @@ export function RpsDuelModal({
                   <button
                     key={item.id}
                     onClick={() => onMakeChoice(item.id)}
-                    className="p-3.5 sm:p-4 rounded-2xl bg-zinc-900 hover:bg-zinc-800 border-2 border-zinc-700 hover:border-amber-400 active:scale-95 transition-all flex flex-col items-center justify-center gap-2 group cursor-pointer shadow-lg"
+                    className="p-3.5 sm:p-4 rounded-2xl bg-zinc-900 hover:bg-zinc-800 border-2 border-zinc-700 hover:border-amber-400 hover:-translate-y-2 hover:scale-105 active:scale-90 transition-all duration-200 flex flex-col items-center justify-center gap-2 group cursor-pointer shadow-lg hover:shadow-xl hover:shadow-amber-500/20"
                   >
-                    <span className="text-4xl group-hover:scale-110 transition-transform">
+                    <span className="text-4xl group-hover:scale-125 group-hover:-rotate-6 transition-transform duration-200">
                       {item.emoji}
                     </span>
                     <span className="text-xs font-black text-white uppercase tracking-wider">

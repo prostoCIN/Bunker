@@ -152,14 +152,14 @@ export function InGameView({
               <button
                 key={card.id}
                 onClick={() => setSelectedCard(card)}
-                className={`w-full p-4 rounded-2xl border transition-all active:scale-98 cursor-pointer flex items-center justify-between text-left ${
+                className={`group w-full p-4 rounded-2xl border transition-all duration-200 ease-out active:scale-98 cursor-pointer flex items-center justify-between text-left hover:-translate-y-1 hover:scale-[1.012] hover:shadow-xl hover:shadow-black/50 ${
                   card.isRevealedToAll
-                    ? "bg-zinc-950/60 border-emerald-500/30 hover:border-emerald-500/50"
-                    : "bg-zinc-950/40 border-zinc-800/50 hover:border-zinc-700/60"
+                    ? "bg-zinc-950/60 border-emerald-500/30 hover:border-emerald-500/60"
+                    : "bg-zinc-950/40 border-zinc-800/50 hover:border-zinc-700/80"
                 }`}
               >
                 <div className="flex items-center gap-3.5 min-w-0 pr-2">
-                  <span className="text-xl xl:text-2xl shrink-0 opacity-80">
+                  <span className="text-xl xl:text-2xl shrink-0 opacity-80 group-hover:scale-115 group-hover:-rotate-3 transition-transform duration-200 ease-out">
                     {card.icon}
                   </span>
 
@@ -189,7 +189,7 @@ export function InGameView({
                   </div>
                 </div>
 
-                <ChevronRight className="w-4 h-4 text-zinc-600 shrink-0" />
+                <ChevronRight className="w-4 h-4 text-zinc-600 group-hover:text-zinc-300 group-hover:translate-x-1 transition-all duration-200 shrink-0" />
               </button>
             ))}
           </div>
@@ -347,12 +347,12 @@ export function InGameView({
       {/* ================= 2. TABLET VIEW (md to <lg, 768px-1023px): 3 COLUMNS ================= */}
       <div className="hidden md:grid lg:hidden md:grid-cols-3 gap-3 flex-1 w-full min-h-0 h-full overflow-hidden">
         {/* Column 1: Catastrophe */}
-        <div className="h-full min-h-0 flex flex-col overflow-hidden">
+        <div className="h-full min-h-0 flex flex-col overflow-hidden animate-col-1">
           <CatastropheColumn catastrophe={room.catastrophe} />
         </div>
 
         {/* Column 2: Players Table */}
-        <div className="h-full min-h-0 flex flex-col overflow-hidden">
+        <div className="h-full min-h-0 flex flex-col overflow-hidden animate-col-2">
           <PlayersTable
             room={room}
             currentPlayer={currentPlayer}
@@ -360,7 +360,10 @@ export function InGameView({
         </div>
 
         {/* Column 3 (Presenting: Hand) or Column 4 (Voting: Kick) */}
-        <div className="h-full min-h-0 flex flex-col overflow-hidden">
+        <div
+          key={isVotingPhase ? "kick-tab" : "hand-tab"}
+          className="h-full min-h-0 flex flex-col overflow-hidden animate-col-3"
+        >
           {!isVotingPhase ? (
             renderHandContent()
           ) : (
@@ -377,12 +380,12 @@ export function InGameView({
       {/* ================= 3. LAPTOP & DESKTOP VIEW (>=lg, 1024px+): 3 COLUMNS ================= */}
       <div className="hidden lg:grid lg:grid-cols-12 lg:gap-4 flex-1 w-full min-h-0 h-full overflow-hidden">
         {/* Column 1: Catastrophe */}
-        <div className="lg:col-span-3 flex flex-col h-full min-h-0 overflow-hidden">
+        <div className="lg:col-span-3 flex flex-col h-full min-h-0 overflow-hidden animate-col-1">
           <CatastropheColumn catastrophe={room.catastrophe} />
         </div>
 
         {/* Column 2: Players Table */}
-        <div className="lg:col-span-5 flex flex-col h-full min-h-0 overflow-hidden">
+        <div className="lg:col-span-5 flex flex-col h-full min-h-0 overflow-hidden animate-col-2">
           <PlayersTable
             room={room}
             currentPlayer={currentPlayer}
@@ -390,7 +393,10 @@ export function InGameView({
         </div>
 
         {/* Column 3 (Presenting: Hand) or Column 4 (Voting: Kick) */}
-        <div className="lg:col-span-4 flex flex-col h-full min-h-0 overflow-hidden">
+        <div
+          key={isVotingPhase ? "kick-desk" : "hand-desk"}
+          className="lg:col-span-4 flex flex-col h-full min-h-0 overflow-hidden animate-col-3"
+        >
           {!isVotingPhase ? (
             renderHandContent()
           ) : (
@@ -406,11 +412,11 @@ export function InGameView({
 
       {/* Leave Game Confirmation Modal (Centered on entire screen) */}
       {isLeaveModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-sm animate-in fade-in duration-150">
-          <div className="w-full max-w-sm bg-zinc-900 border border-zinc-800 rounded-3xl p-6 shadow-2xl text-center relative animate-in zoom-in-95 duration-150">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 animate-modal-backdrop">
+          <div className="w-full max-w-sm bg-zinc-900 border border-zinc-800 rounded-3xl p-6 shadow-2xl text-center relative animate-modal-sway animate-gentle-float">
             <button
               onClick={() => setIsLeaveModalOpen(false)}
-              className="absolute top-4 right-4 text-zinc-400 hover:text-white p-1 rounded-full bg-zinc-800 cursor-pointer"
+              className="absolute top-4 right-4 text-zinc-400 hover:text-white p-1 rounded-full bg-zinc-800 hover:scale-110 active:scale-95 transition-transform cursor-pointer"
             >
               <X className="w-5 h-5" />
             </button>
@@ -429,14 +435,14 @@ export function InGameView({
                   setIsLeaveModalOpen(false);
                   onLeaveRoom();
                 }}
-                className="w-full py-3 bg-red-600 hover:bg-red-500 text-white font-bold text-xs uppercase tracking-wider rounded-xl transition-all active:scale-98 cursor-pointer"
+                className="w-full py-3 bg-red-600 hover:bg-red-500 text-white font-bold text-xs uppercase tracking-wider rounded-xl transition-all hover:-translate-y-0.5 hover:shadow-lg hover:shadow-red-950/40 active:translate-y-0.5 active:scale-98 cursor-pointer"
               >
                 Так, вийти
               </button>
 
               <button
                 onClick={() => setIsLeaveModalOpen(false)}
-                className="w-full py-2.5 bg-zinc-950 hover:bg-zinc-800 border border-zinc-800 text-zinc-400 hover:text-white font-medium text-xs rounded-xl transition-all cursor-pointer"
+                className="w-full py-2.5 bg-zinc-950 hover:bg-zinc-800 border border-zinc-800 text-zinc-400 hover:text-white font-medium text-xs rounded-xl transition-all hover:-translate-y-0.5 active:translate-y-0.5 active:scale-98 cursor-pointer"
               >
                 Скасувати
               </button>

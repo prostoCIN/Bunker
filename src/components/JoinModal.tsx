@@ -112,11 +112,11 @@ export function JoinModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-sm animate-in fade-in duration-150">
-      <div className="w-full max-w-sm bg-zinc-900 border-2 border-zinc-700 rounded-3xl p-6 shadow-2xl relative">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 animate-modal-backdrop">
+      <div className="w-full max-w-sm bg-zinc-900 border-2 border-zinc-700 rounded-3xl p-6 shadow-2xl relative animate-modal-sway animate-gentle-float">
         <button
           onClick={onClose}
-          className="absolute top-4 right-4 text-zinc-400 hover:text-white p-1 rounded-full bg-zinc-800 cursor-pointer"
+          className="absolute top-4 right-4 text-zinc-400 hover:text-white p-1 rounded-full bg-zinc-800 hover:scale-110 active:scale-95 transition-transform cursor-pointer"
         >
           <X className="w-5 h-5" />
         </button>
@@ -150,7 +150,7 @@ export function JoinModal({
                   onChange={(e) => handleDigitChange(idx, e.target.value)}
                   onKeyDown={(e) => handleKeyDown(idx, e)}
                   onPaste={handlePaste}
-                  className={`w-12 h-14 sm:w-13 sm:h-16 text-center font-mono text-2xl font-black uppercase rounded-2xl outline-none border-2 transition-all shadow-inner ${
+                  className={`w-12 h-14 sm:w-13 sm:h-16 text-center font-mono text-2xl font-black uppercase rounded-2xl outline-none border-2 transition-all duration-150 focus:scale-105 shadow-inner ${
                     digit
                       ? "bg-zinc-950 border-amber-400 text-amber-300 shadow-amber-950/30"
                       : "bg-zinc-950/70 border-zinc-700 text-white focus:border-amber-400 focus:bg-zinc-950"
@@ -169,7 +169,7 @@ export function JoinModal({
           <button
             type="submit"
             disabled={fullCode.length < 3}
-            className="w-full py-3.5 bg-amber-500 hover:bg-amber-400 disabled:opacity-40 disabled:pointer-events-none text-zinc-950 font-black text-sm uppercase tracking-wider rounded-2xl flex items-center justify-center gap-2 shadow-lg shadow-amber-950/40 transition-all active:scale-98 cursor-pointer"
+            className="w-full py-3.5 bg-amber-500 hover:bg-amber-400 disabled:opacity-40 disabled:pointer-events-none text-zinc-950 font-black text-sm uppercase tracking-wider rounded-2xl flex items-center justify-center gap-2 shadow-lg shadow-amber-950/40 hover:shadow-xl hover:shadow-amber-500/20 hover:-translate-y-0.5 active:translate-y-0.5 active:scale-98 transition-all duration-150 cursor-pointer"
           >
             <span>Увійти в лобі</span>
             <ArrowRight className="w-4 h-4" />

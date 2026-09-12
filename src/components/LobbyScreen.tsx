@@ -81,7 +81,7 @@ export function LobbyScreen({
 
         <button
           onClick={() => setShowLeaveConfirm(true)}
-          className="text-xs text-zinc-400 hover:text-white flex items-center gap-1.5 transition-colors px-3 py-1.5 rounded-xl bg-zinc-900 border border-zinc-800 cursor-pointer"
+          className="text-xs text-zinc-400 hover:text-white flex items-center gap-1.5 transition-all px-3 py-1.5 rounded-xl bg-zinc-900 hover:bg-zinc-800 hover:-translate-y-0.5 border border-zinc-800 cursor-pointer active:translate-y-0.5 active:scale-95"
         >
           <LogOut className="w-3.5 h-3.5" />
           <span>Вийти</span>
@@ -111,7 +111,7 @@ export function LobbyScreen({
             <div className="flex items-center gap-2">
               <button
                 onClick={handleCopyCode}
-                className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-zinc-200 text-xs font-semibold transition-all cursor-pointer"
+                className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-zinc-800 hover:bg-zinc-700 hover:-translate-y-0.5 text-zinc-200 text-xs font-semibold transition-all active:translate-y-0.5 active:scale-95 cursor-pointer shadow-sm"
               >
                 {copied ? <Check className="w-4 h-4 text-emerald-400" /> : <Copy className="w-4 h-4" />}
                 <span>{copied ? "Скопійовано" : "Копіювати"}</span>
@@ -119,7 +119,7 @@ export function LobbyScreen({
 
               <button
                 onClick={handleCopyInviteLink}
-                className="p-2 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-zinc-300 hover:text-white transition-all cursor-pointer"
+                className="p-2 rounded-xl bg-zinc-800 hover:bg-zinc-700 hover:-translate-y-0.5 text-zinc-300 hover:text-white transition-all active:translate-y-0.5 active:scale-95 cursor-pointer shadow-sm"
                 title="Скопіювати посилання"
               >
                 {copiedLink ? <Check className="w-4 h-4 text-emerald-400" /> : <Share2 className="w-4 h-4" />}
@@ -140,7 +140,7 @@ export function LobbyScreen({
                 .map((player) => (
                   <div
                     key={player.id}
-                    className={`flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs border ${
+                    className={`flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs border transition-all duration-150 hover:scale-[1.03] hover:translate-x-0.5 ${
                       player.isReady
                         ? "bg-emerald-950/30 border-emerald-500/30 text-emerald-300 font-medium"
                         : "bg-zinc-950/40 border-zinc-800/50 text-zinc-400"
@@ -166,10 +166,10 @@ export function LobbyScreen({
       <div className="w-full space-y-3 pt-2">
         <button
           onClick={onToggleReady}
-          className={`w-full py-4 rounded-2xl font-bold text-base flex items-center justify-center gap-2.5 transition-all active:scale-98 cursor-pointer shadow-xl ${
+          className={`w-full py-4 rounded-2xl font-bold text-base flex items-center justify-center gap-2.5 transition-all cursor-pointer shadow-xl hover:-translate-y-0.5 active:translate-y-0.5 active:scale-98 ${
             currentPlayer.isReady
-              ? "bg-emerald-600 hover:bg-emerald-500 text-white shadow-emerald-950/40"
-              : "bg-zinc-800 hover:bg-zinc-700 text-white"
+              ? "bg-emerald-600 hover:bg-emerald-500 hover:shadow-emerald-950/60 text-white shadow-emerald-950/40"
+              : "bg-zinc-800 hover:bg-zinc-700 hover:shadow-black/40 text-white"
           }`}
         >
           {currentPlayer.isReady ? (
@@ -189,7 +189,7 @@ export function LobbyScreen({
               disabled={readyCount < totalCount}
               className={`w-full py-4 rounded-2xl font-bold text-sm uppercase tracking-wider transition-all shadow-xl flex items-center justify-center gap-2 ${
                 readyCount === totalCount
-                  ? "bg-white hover:bg-zinc-200 text-zinc-950 shadow-white/10 cursor-pointer active:scale-98"
+                  ? "bg-white hover:bg-zinc-200 hover:-translate-y-0.5 hover:shadow-2xl hover:shadow-white/10 text-zinc-950 shadow-white/10 cursor-pointer active:translate-y-0.5 active:scale-98"
                   : "bg-zinc-900 border border-zinc-800 text-zinc-600 cursor-not-allowed"
               }`}
             >
@@ -210,11 +210,11 @@ export function LobbyScreen({
 
       {/* Leave Lobby Confirmation Modal (Centered on entire screen) */}
       {showLeaveConfirm && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-sm animate-in fade-in duration-150">
-          <div className="w-full max-w-sm bg-zinc-900 border border-zinc-800 rounded-3xl p-6 shadow-2xl text-center relative animate-in zoom-in-95 duration-150">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-sm animate-modal-backdrop">
+          <div className="w-full max-w-sm bg-zinc-900 border border-zinc-800 rounded-3xl p-6 shadow-2xl text-center relative animate-modal-sway animate-gentle-float">
             <button
               onClick={() => setShowLeaveConfirm(false)}
-              className="absolute top-4 right-4 text-zinc-400 hover:text-white p-1 rounded-full bg-zinc-800 cursor-pointer"
+              className="absolute top-4 right-4 text-zinc-400 hover:text-white p-1 rounded-full bg-zinc-800 hover:bg-zinc-700 cursor-pointer active:scale-95 transition-all"
             >
               <X className="w-5 h-5" />
             </button>
@@ -233,14 +233,14 @@ export function LobbyScreen({
                   setShowLeaveConfirm(false);
                   onLeaveRoom();
                 }}
-                className="w-full py-3 bg-red-600 hover:bg-red-500 text-white font-bold text-xs uppercase tracking-wider rounded-xl transition-all active:scale-98 cursor-pointer"
+                className="w-full py-3 bg-red-600 hover:bg-red-500 hover:-translate-y-0.5 text-white font-bold text-xs uppercase tracking-wider rounded-xl transition-all active:translate-y-0.5 active:scale-98 cursor-pointer shadow-lg shadow-red-950/40"
               >
                 Так, вийти
               </button>
 
               <button
                 onClick={() => setShowLeaveConfirm(false)}
-                className="w-full py-2.5 bg-zinc-950 hover:bg-zinc-800 border border-zinc-800 text-zinc-400 hover:text-white font-medium text-xs rounded-xl transition-all cursor-pointer"
+                className="w-full py-2.5 bg-zinc-950 hover:bg-zinc-800 border border-zinc-800 text-zinc-400 hover:text-white font-medium text-xs rounded-xl transition-all cursor-pointer active:scale-95"
               >
                 Скасувати
               </button>

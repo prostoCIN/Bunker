@@ -62,3 +62,127 @@ body {
   background: #3f3f46;
 }
 
+/* ================= DYNAMIC UI MICRO-ANIMATIONS ================= */
+
+@keyframes columnEnter {
+  0% {
+    opacity: 0;
+    transform: translateY(18px) scale(0.985);
+  }
+  60% {
+    opacity: 0.9;
+    transform: translateY(-2px) scale(1.005);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes modalBackdrop {
+  0% {
+    opacity: 0;
+    backdrop-filter: blur(0px);
+  }
+  100% {
+    opacity: 1;
+    backdrop-filter: blur(10px);
+  }
+}
+
+@keyframes modalSwayEnter {
+  0% {
+    opacity: 0;
+    transform: scale(0.92) translateY(24px) rotate(-0.5deg);
+  }
+  60% {
+    opacity: 1;
+    transform: scale(1.015) translateY(-3px) rotate(0.2deg);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) translateY(0) rotate(0deg);
+  }
+}
+
+@keyframes gentleFloat {
+  0%, 100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-4px);
+  }
+}
+
+@keyframes subtleSway {
+  0%, 100% {
+    transform: rotate(0deg) translateY(0px);
+  }
+  30% {
+    transform: rotate(0.4deg) translateY(-2px);
+  }
+  70% {
+    transform: rotate(-0.4deg) translateY(-1px);
+  }
+}
+
+@keyframes activeTurnPulse {
+  0%, 100% {
+    box-shadow: 0 0 15px -2px rgba(245, 158, 11, 0.25), inset 0 0 12px -4px rgba(245, 158, 11, 0.15);
+  }
+  50% {
+    box-shadow: 0 0 28px 2px rgba(245, 158, 11, 0.45), inset 0 0 16px -2px rgba(245, 158, 11, 0.25);
+  }
+}
+
+@keyframes bannerSlideDown {
+  0% {
+    opacity: 0;
+    transform: translateY(-20px) scale(0.97);
+  }
+  70% {
+    transform: translateY(2px) scale(1.005);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.animate-col-1 {
+  animation: columnEnter 0.42s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.animate-col-2 {
+  animation: columnEnter 0.42s cubic-bezier(0.16, 1, 0.3, 1) 0.07s both;
+}
+
+.animate-col-3 {
+  animation: columnEnter 0.42s cubic-bezier(0.16, 1, 0.3, 1) 0.14s both;
+}
+
+.animate-modal-backdrop {
+  animation: modalBackdrop 0.22s ease-out both;
+}
+
+.animate-modal-sway {
+  animation: modalSwayEnter 0.35s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.animate-gentle-float {
+  animation: gentleFloat 5s ease-in-out infinite;
+}
+
+.animate-subtle-sway {
+  animation: subtleSway 7s ease-in-out infinite;
+}
+
+.animate-active-turn {
+  animation: activeTurnPulse 3s ease-in-out infinite;
+}
+
+.animate-banner-in {
+  animation: bannerSlideDown 0.35s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+
