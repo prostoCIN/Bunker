@@ -17,7 +17,10 @@ import {
   UserX,
   Skull,
   Zap,
-  X
+  X,
+  LogOut,
+  Copy,
+  Check
 } from "lucide-react";
 
 interface InGameViewProps {
@@ -57,6 +60,17 @@ export function InGameView({
   const [selectedCard, setSelectedCard] = useState<PlayerCharacterCard | null>(null);
   const [isKickModalOpen, setIsKickModalOpen] = useState(false);
   const [isLeaveModalOpen, setIsLeaveModalOpen] = useState(false);
+  const [copiedCode, setCopiedCode] = useState(false);
+
+  const handleCopyRoomCode = async () => {
+    try {
+      await navigator.clipboard.writeText(room.code);
+      setCopiedCode(true);
+      setTimeout(() => setCopiedCode(false), 2000);
+    } catch {
+      // ignore
+    }
+  };
 
   const currentTurnPlayer = room.players.find(
     (p) => p.id === room.currentTurnPlayerId
@@ -188,6 +202,72 @@ export function InGameView({
 
   return (
     <div className="w-full flex-1 flex flex-col h-full min-h-0 overflow-hidden">
+      {/* ================= GLOBAL TOP BAR ================= */}
+      <header className="w-full flex items-center justify-between px-3 sm:px-4 py-2 sm:py-2.5 bg-zinc-950/70 border border-zinc-800/70 rounded-2xl mb-2.5 sm:mb-3 shrink-0 backdrop-blur-md shadow-lg">
+        {/* Left: Brand + Room Code + Round/Phase */}
+        <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+          <span className="font-black text-sm sm:text-base tracking-wider text-white uppercase">
+            БУНКЕР
+          </span>
+
+          <div className="h-3.5 w-px bg-zinc-800" />
+
+          {/* Room Code Badge with Copy */}
+          <button
+            onClick={handleCopyRoomCode}
+            title="Натисніть, щоб скопіювати код кімнати"
+            className="flex items-center gap-1.5 px-2 py-0.5 rounded-lg bg-zinc-900 border border-zinc-800 hover:border-zinc-700 text-zinc-300 hover:text-white text-xs font-mono font-semibold transition-colors cursor-pointer"
+          >
+            <span>{room.code}</span>
+            {copiedCode ? (
+              <Check className="w-3 h-3 text-emerald-400" />
+            ) : (
+              <Copy className="w-3 h-3 text-zinc-500" />
+            )}
+          </button>
+
+          {/* Round & Phase Badge */}
+          <span className="hidden sm:inline-flex items-center text-[11px] font-mono text-zinc-400 bg-zinc-900/80 border border-zinc-800/80 px-2 py-0.5 rounded-md">
+            Раунд #{room.roundNumber || 1}
+          </span>
+          <span
+            className={`text-[10px] sm:text-[11px] font-semibold px-2 py-0.5 rounded-md border truncate ${
+              isVotingPhase
+                ? "text-purple-300 bg-purple-950/50 border-purple-500/40"
+                : "text-amber-300 bg-amber-950/50 border-amber-500/40"
+            }`}
+          >
+            {isVotingPhase ? "Голосування" : "Виступи"}
+          </span>
+        </div>
+
+        {/* Right: Player info + Leave Button */}
+        <div className="flex items-center gap-2 shrink-0">
+          <div className="hidden md:flex items-center gap-1.5 text-xs text-zinc-300 bg-zinc-900/60 border border-zinc-800 px-2.5 py-1 rounded-xl">
+            <span className="font-mono font-bold text-zinc-400">
+              #{currentPlayer.playerNumber ?? 1}
+            </span>
+            <span className="font-semibold text-white truncate max-w-[120px]">
+              {currentPlayer.name}
+            </span>
+            {currentPlayer.isHost && (
+              <span className="text-[9px] font-mono text-amber-300 bg-amber-950/60 border border-amber-500/30 px-1 py-0.2 rounded">
+                Хост
+              </span>
+            )}
+          </div>
+
+          <button
+            onClick={() => setIsLeaveModalOpen(true)}
+            title="Покинути гру"
+            className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1 sm:py-1.5 text-xs font-medium text-zinc-400 hover:text-red-300 bg-zinc-900/90 hover:bg-red-950/30 border border-zinc-800 hover:border-red-500/40 rounded-xl transition-all cursor-pointer"
+          >
+            <LogOut className="w-3.5 h-3.5" />
+            <span className="text-xs">Вийти</span>
+          </button>
+        </div>
+      </header>
+
       {/* ================= 1. MOBILE VIEW (<md, <768px): ALWAYS 3 TABS ================= */}
       <div className="md:hidden flex flex-col flex-1 min-h-0 overflow-hidden">
         {/* Top 3-Segment Switcher */}
@@ -252,7 +332,6 @@ export function InGameView({
             <PlayersTable
               room={room}
               currentPlayer={currentPlayer}
-              onLeaveRoom={() => setIsLeaveModalOpen(true)}
               onSkipTurn={onSkipTurn}
             />
           )}
@@ -282,7 +361,6 @@ export function InGameView({
           <PlayersTable
             room={room}
             currentPlayer={currentPlayer}
-            onLeaveRoom={() => setIsLeaveModalOpen(true)}
             onSkipTurn={onSkipTurn}
           />
         </div>
@@ -316,7 +394,6 @@ export function InGameView({
           <PlayersTable
             room={room}
             currentPlayer={currentPlayer}
-            onLeaveRoom={() => setIsLeaveModalOpen(true)}
             onSkipTurn={onSkipTurn}
           />
         </div>

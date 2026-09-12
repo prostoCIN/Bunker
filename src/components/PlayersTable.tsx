@@ -2,19 +2,17 @@
 
 import React from "react";
 import { GameRoom, Player } from "@/types/game";
-import { SkipForward, LogOut } from "lucide-react";
+import { SkipForward } from "lucide-react";
 
 interface PlayersTableProps {
   room: GameRoom;
   currentPlayer: Player;
-  onLeaveRoom?: () => void;
   onSkipTurn?: () => void;
 }
 
 export function PlayersTable({
   room,
   currentPlayer,
-  onLeaveRoom,
   onSkipTurn,
 }: PlayersTableProps) {
   const alivePlayers = [...room.players]
@@ -60,19 +58,9 @@ export function PlayersTable({
         </div>
 
         <div className="flex items-center gap-2 shrink-0">
-          <span className="text-[11px] font-mono text-zinc-500 hidden sm:inline">
+          <span className="text-[11px] font-mono text-zinc-500">
             {alivePlayers.length} у грі
           </span>
-          {onLeaveRoom && (
-            <button
-              onClick={onLeaveRoom}
-              title="Покинути гру"
-              className="px-2 py-1 text-zinc-400 hover:text-white rounded-lg hover:bg-zinc-800/80 border border-zinc-800/80 hover:border-zinc-700 transition-colors cursor-pointer flex items-center gap-1 text-xs"
-            >
-              <LogOut className="w-3.5 h-3.5" />
-              <span className="hidden sm:inline text-[11px]">Вийти</span>
-            </button>
-          )}
         </div>
       </div>
 
