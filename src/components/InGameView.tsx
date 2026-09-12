@@ -188,14 +188,10 @@ export function InGameView({
 
   return (
     <div className="w-full flex-1 flex flex-col h-full min-h-0 overflow-hidden">
-      {/* ================= 1. MOBILE VIEW (<md, <768px): 3 OR 4 TABS ================= */}
+      {/* ================= 1. MOBILE VIEW (<md, <768px): ALWAYS 3 TABS ================= */}
       <div className="md:hidden flex flex-col flex-1 min-h-0 overflow-hidden">
-        {/* Top Switcher: 3 tabs when presenting, 4 tabs when voting */}
-        <div
-          className={`w-full grid ${
-            isVotingPhase ? "grid-cols-4" : "grid-cols-3"
-          } bg-zinc-950/80 border border-zinc-800/60 p-1 rounded-2xl mb-2.5 shadow-inner gap-1 text-center shrink-0`}
-        >
+        {/* Top 3-Segment Switcher */}
+        <div className="w-full grid grid-cols-3 bg-zinc-950/80 border border-zinc-800/60 p-1 rounded-2xl mb-2.5 shadow-inner gap-1 text-center shrink-0">
           <button
             onClick={() => setActiveTab("catastrophe")}
             className={`py-2 rounded-xl text-xs font-medium flex items-center justify-center gap-1 transition-all cursor-pointer ${
@@ -220,19 +216,7 @@ export function InGameView({
             <span className="truncate">Стіл</span>
           </button>
 
-          <button
-            onClick={() => setActiveTab("hand")}
-            className={`py-2 rounded-xl text-xs font-medium flex items-center justify-center gap-1 transition-all cursor-pointer ${
-              activeTab === "hand"
-                ? "bg-zinc-800 text-white font-bold shadow-sm"
-                : "text-zinc-400 hover:text-white"
-            }`}
-          >
-            <Layers className="w-3.5 h-3.5" />
-            <span className="truncate">Рука</span>
-          </button>
-
-          {isVotingPhase && (
+          {isVotingPhase ? (
             <button
               onClick={() => setActiveTab("kick")}
               className={`py-2 rounded-xl text-xs font-medium flex items-center justify-center gap-1 transition-all cursor-pointer ${
@@ -242,7 +226,19 @@ export function InGameView({
               }`}
             >
               <UserX className="w-3.5 h-3.5" />
-              <span className="truncate">Вигнати</span>
+              <span className="truncate">Голосування</span>
+            </button>
+          ) : (
+            <button
+              onClick={() => setActiveTab("hand")}
+              className={`py-2 rounded-xl text-xs font-medium flex items-center justify-center gap-1 transition-all cursor-pointer ${
+                activeTab === "hand"
+                  ? "bg-zinc-800 text-white font-bold shadow-sm"
+                  : "text-zinc-400 hover:text-white"
+              }`}
+            >
+              <Layers className="w-3.5 h-3.5" />
+              <span className="truncate">Рука</span>
             </button>
           )}
         </div>
@@ -260,7 +256,7 @@ export function InGameView({
               onSkipTurn={onSkipTurn}
             />
           )}
-          {activeTab === "hand" && renderHandContent()}
+          {!isVotingPhase && activeTab === "hand" && renderHandContent()}
           {isVotingPhase && activeTab === "kick" && (
             <KickColumn
               room={room}
@@ -274,15 +270,14 @@ export function InGameView({
         </div>
       </div>
 
-      {/* ================= 2. TABLET VIEW (md to <lg, 768px-1023px) ================= */}
-      <div
-        className={`hidden md:grid lg:hidden gap-3 flex-1 w-full min-h-0 h-full overflow-hidden ${
-          isVotingPhase ? "md:grid-cols-2 md:grid-rows-2" : "md:grid-cols-3"
-        }`}
-      >
+      {/* ================= 2. TABLET VIEW (md to <lg, 768px-1023px): 3 COLUMNS ================= */}
+      <div className="hidden md:grid lg:hidden md:grid-cols-3 gap-3 flex-1 w-full min-h-0 h-full overflow-hidden">
+        {/* Column 1: Catastrophe */}
         <div className="h-full min-h-0 flex flex-col overflow-hidden">
           <CatastropheColumn catastrophe={room.catastrophe} />
         </div>
+
+        {/* Column 2: Players Table */}
         <div className="h-full min-h-0 flex flex-col overflow-hidden">
           <PlayersTable
             room={room}
@@ -291,11 +286,12 @@ export function InGameView({
             onSkipTurn={onSkipTurn}
           />
         </div>
+
+        {/* Column 3 (Presenting: Hand) or Column 4 (Voting: Kick) */}
         <div className="h-full min-h-0 flex flex-col overflow-hidden">
-          {renderHandContent()}
-        </div>
-        {isVotingPhase && (
-          <div className="h-full min-h-0 flex flex-col overflow-hidden">
+          {!isVotingPhase ? (
+            renderHandContent()
+          ) : (
             <KickColumn
               room={room}
               currentPlayer={currentPlayer}
@@ -304,20 +300,19 @@ export function InGameView({
               onSkipTurn={onSkipTurn}
               onEndTurn={onEndTurn}
             />
-          </div>
-        )}
+          )}
+        </div>
       </div>
 
-      {/* ================= 3. LAPTOP & DESKTOP VIEW (>=lg, 1024px+): 3 OR 4 COLUMNS ================= */}
+      {/* ================= 3. LAPTOP & DESKTOP VIEW (>=lg, 1024px+): 3 COLUMNS ================= */}
       <div className="hidden lg:grid lg:grid-cols-12 lg:gap-4 flex-1 w-full min-h-0 h-full overflow-hidden">
+        {/* Column 1: Catastrophe */}
         <div className="lg:col-span-3 flex flex-col h-full min-h-0 overflow-hidden">
           <CatastropheColumn catastrophe={room.catastrophe} />
         </div>
-        <div
-          className={`${
-            isVotingPhase ? "lg:col-span-4" : "lg:col-span-5"
-          } flex flex-col h-full min-h-0 overflow-hidden transition-all duration-300`}
-        >
+
+        {/* Column 2: Players Table */}
+        <div className="lg:col-span-5 flex flex-col h-full min-h-0 overflow-hidden">
           <PlayersTable
             room={room}
             currentPlayer={currentPlayer}
@@ -325,15 +320,12 @@ export function InGameView({
             onSkipTurn={onSkipTurn}
           />
         </div>
-        <div
-          className={`${
-            isVotingPhase ? "lg:col-span-3" : "lg:col-span-4"
-          } flex flex-col h-full min-h-0 overflow-hidden transition-all duration-300`}
-        >
-          {renderHandContent()}
-        </div>
-        {isVotingPhase && (
-          <div className="lg:col-span-2 flex flex-col h-full min-h-0 overflow-hidden animate-in fade-in duration-300">
+
+        {/* Column 3 (Presenting: Hand) or Column 4 (Voting: Kick) */}
+        <div className="lg:col-span-4 flex flex-col h-full min-h-0 overflow-hidden">
+          {!isVotingPhase ? (
+            renderHandContent()
+          ) : (
             <KickColumn
               room={room}
               currentPlayer={currentPlayer}
@@ -342,8 +334,8 @@ export function InGameView({
               onSkipTurn={onSkipTurn}
               onEndTurn={onEndTurn}
             />
-          </div>
-        )}
+          )}
+        </div>
       </div>
 
       {/* Leave Game Confirmation Modal (Centered on entire screen) */}
