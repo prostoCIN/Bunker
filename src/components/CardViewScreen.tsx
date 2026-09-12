@@ -111,10 +111,10 @@ export function CardViewScreen({
         </button>
 
         {isSpecial && (
-          <span className={`text-xs font-mono font-bold px-2.5 py-1 rounded-full border ${
+          <span className={`text-[10px] font-mono font-semibold px-2 py-0.5 rounded-md border shrink-0 ${
             card.isUsed
-              ? "bg-zinc-900 border-zinc-700 text-zinc-400"
-              : "bg-amber-950/80 border-amber-600 text-amber-300 animate-pulse"
+              ? "bg-zinc-800/60 border-zinc-700/40 text-zinc-400"
+              : "bg-amber-950/50 border-amber-500/30 text-amber-300 animate-pulse"
           }`}>
             {card.isUsed ? "✓ Використано" : "⚡ Готова до застосування"}
           </span>
@@ -141,17 +141,17 @@ export function CardViewScreen({
                 {card.categoryName}
               </span>
 
-              {/* Центральний мінімалістичний символ і назва */}
-              <div className="my-auto flex flex-col items-center">
-                <span className="text-6xl sm:text-7xl mb-4 block filter grayscale opacity-80">
+              {/* Велика іконка по центру */}
+              <div className="my-auto flex flex-col items-center gap-3">
+                <span className="text-5xl sm:text-6xl drop-shadow-md">
                   {card.icon}
                 </span>
-                <h2 className="text-xl sm:text-2xl font-bold text-zinc-200 tracking-wide">
-                  {card.categoryName}
-                </h2>
+                <span className="text-xs font-mono text-zinc-500 uppercase tracking-wider">
+                  Натисніть для перегляду
+                </span>
               </div>
 
-              {/* Низ сорочки */}
+              {/* Чистий низ */}
               <div className="w-8 h-1 bg-zinc-800 rounded-full" />
             </div>
           ) : (
@@ -167,7 +167,7 @@ export function CardViewScreen({
                 </div>
 
                 {isSpecial && card.isUsed && (
-                  <span className="text-[10px] font-mono font-bold bg-zinc-800 text-zinc-400 px-2 py-0.5 rounded">
+                  <span className="text-[10px] font-mono font-semibold px-2 py-0.5 rounded-md border shrink-0 bg-zinc-800/60 border-zinc-700/40 text-zinc-400">
                     Використано
                   </span>
                 )}

@@ -127,20 +127,20 @@ export function InGameView({
         {/* Hand Header */}
         <div className="flex items-center justify-between pb-4 mb-4 border-b border-zinc-800/60 shrink-0">
           <div className="flex items-center gap-2 flex-wrap">
-            <span className="text-xs font-mono font-bold px-2 py-0.5 rounded-lg bg-zinc-800 border border-zinc-700 text-zinc-300">
+            <span className="text-xs font-mono font-bold text-zinc-300 bg-zinc-800/80 border border-zinc-700/50 px-2 py-0.5 rounded-lg shrink-0">
               #{currentPlayer.playerNumber ?? 1}
             </span>
             <h2 className="text-base font-bold text-white tracking-wide">
               {currentPlayer.name}
             </h2>
             {isMyTurn && !isVotingPhase && (
-              <span className="text-[10px] font-bold text-emerald-400 bg-emerald-950/60 border border-emerald-500/40 px-2 py-0.5 rounded-md animate-pulse">
+              <span className="text-[10px] font-mono font-semibold text-emerald-400 bg-emerald-950/50 border border-emerald-500/30 px-2 py-0.5 rounded-md shrink-0 animate-pulse">
                 🎯 Ваш хід
               </span>
             )}
           </div>
 
-          <span className="text-[11px] font-mono tracking-wider text-zinc-400 bg-zinc-800/60 px-2.5 py-0.5 rounded-full">
+          <span className="text-[11px] font-mono font-medium text-zinc-400 bg-zinc-800/60 border border-zinc-700/40 px-2.5 py-0.5 rounded-full shrink-0">
             {revealedCount} / {cards.length} відкрито
           </span>
         </div>
@@ -165,11 +165,11 @@ export function InGameView({
 
                   <div className="min-w-0">
                     <div className="flex items-center gap-2">
-                      <span className="text-[11px] font-mono uppercase tracking-wider text-zinc-500 truncate">
+                      <span className="text-[10px] font-mono uppercase tracking-wider text-zinc-500 truncate">
                         {card.categoryName}
                       </span>
                       {card.isRevealedToAll && (
-                        <span className="text-[9px] font-mono font-bold text-emerald-400 bg-emerald-950/60 border border-emerald-500/30 px-1.5 py-0.2 rounded">
+                        <span className="text-[10px] font-mono font-semibold text-emerald-400 bg-emerald-950/50 border border-emerald-500/30 px-2 py-0.5 rounded-md shrink-0">
                           відкрито
                         </span>
                       )}
@@ -225,14 +225,14 @@ export function InGameView({
           </button>
 
           {/* Round & Phase Badge */}
-          <span className="hidden sm:inline-flex items-center text-[11px] font-mono text-zinc-400 bg-zinc-900/80 border border-zinc-800/80 px-2 py-0.5 rounded-md">
+          <span className="hidden sm:inline-flex items-center text-[11px] font-mono font-medium text-zinc-400 bg-zinc-800/60 border border-zinc-700/40 px-2.5 py-0.5 rounded-full shrink-0">
             Раунд #{room.roundNumber || 1}
           </span>
           <span
-            className={`text-[10px] sm:text-[11px] font-semibold px-2 py-0.5 rounded-md border truncate ${
+            className={`text-[10px] sm:text-[11px] font-mono font-semibold px-2 py-0.5 rounded-md border shrink-0 truncate ${
               isVotingPhase
-                ? "text-purple-300 bg-purple-950/50 border-purple-500/40"
-                : "text-amber-300 bg-amber-950/50 border-amber-500/40"
+                ? "text-purple-300 bg-purple-950/50 border-purple-500/30"
+                : "text-amber-300 bg-amber-950/50 border-amber-500/30"
             }`}
           >
             {isVotingPhase ? "Голосування" : "Виступи"}
@@ -242,14 +242,14 @@ export function InGameView({
         {/* Right: Player info + Leave Button */}
         <div className="flex items-center gap-2 shrink-0">
           <div className="hidden md:flex items-center gap-1.5 text-xs text-zinc-300 bg-zinc-900/60 border border-zinc-800 px-2.5 py-1 rounded-xl">
-            <span className="font-mono font-bold text-zinc-400">
+            <span className="text-xs font-mono font-bold text-zinc-300 bg-zinc-800/80 border border-zinc-700/50 px-2 py-0.5 rounded-lg shrink-0">
               #{currentPlayer.playerNumber ?? 1}
             </span>
             <span className="font-semibold text-white truncate max-w-[120px]">
               {currentPlayer.name}
             </span>
             {currentPlayer.isHost && (
-              <span className="text-[9px] font-mono text-amber-300 bg-amber-950/60 border border-amber-500/30 px-1 py-0.2 rounded">
+              <span className="text-[10px] font-mono font-semibold text-amber-300 bg-amber-950/50 border border-amber-500/30 px-2 py-0.5 rounded-md shrink-0">
                 Хост
               </span>
             )}

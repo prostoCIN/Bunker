@@ -44,24 +44,24 @@ export function ExpelledScreen({
             </span>
 
             {isSpectatorOnly ? (
-              <span className="text-[10px] sm:text-[11px] font-semibold px-2 py-0.5 rounded-md border text-blue-400 bg-blue-950/50 border-blue-500/40 shrink-0">
+              <span className="text-[10px] sm:text-[11px] font-mono font-semibold px-2 py-0.5 rounded-md border text-blue-400 bg-blue-950/50 border-blue-500/30 shrink-0">
                 Глядач
               </span>
             ) : (
-              <span className="text-[10px] sm:text-[11px] font-semibold px-2 py-0.5 rounded-md border text-red-400 bg-red-950/50 border-red-500/40 shrink-0">
+              <span className="text-[10px] sm:text-[11px] font-mono font-semibold px-2 py-0.5 rounded-md border text-red-400 bg-red-950/50 border-red-500/30 shrink-0">
                 Спостерігач
               </span>
             )}
 
-            <span className="hidden sm:inline-flex items-center text-[11px] font-mono text-zinc-400 bg-zinc-900/80 border border-zinc-800/80 px-2 py-0.5 rounded-md">
+            <span className="hidden sm:inline-flex items-center text-[11px] font-mono font-medium text-zinc-400 bg-zinc-800/60 border border-zinc-700/40 px-2.5 py-0.5 rounded-full shrink-0">
               Раунд #{room.roundNumber || 1}
             </span>
 
             <span
-              className={`hidden md:inline-flex text-[11px] font-semibold px-2 py-0.5 rounded-md border truncate ${
+              className={`hidden md:inline-flex text-[10px] sm:text-[11px] font-mono font-semibold px-2 py-0.5 rounded-md border shrink-0 truncate ${
                 isVotingPhase
-                  ? "text-purple-300 bg-purple-950/50 border-purple-500/40"
-                  : "text-amber-300 bg-amber-950/50 border-amber-500/40"
+                  ? "text-purple-300 bg-purple-950/50 border-purple-500/30"
+                  : "text-amber-300 bg-amber-950/50 border-amber-500/30"
               }`}
             >
               {isVotingPhase ? "Голосування" : "Виступи"}

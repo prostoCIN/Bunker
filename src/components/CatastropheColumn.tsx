@@ -15,7 +15,7 @@ export function CatastropheColumn({ catastrophe }: CatastropheColumnProps) {
         <h2 className="text-base font-bold text-white tracking-wide">
           Катастрофа
         </h2>
-        <span className="text-[11px] font-mono tracking-widest text-zinc-400 uppercase bg-zinc-800/60 px-2.5 py-0.5 rounded-full">
+        <span className="text-[11px] font-mono font-medium text-zinc-400 uppercase bg-zinc-800/60 border border-zinc-700/40 px-2.5 py-0.5 rounded-full shrink-0">
           {catastrophe.badge}
         </span>
       </div>
