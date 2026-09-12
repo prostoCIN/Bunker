@@ -56,6 +56,7 @@ export function InGameView({
   const [activeTab, setActiveTab] = useState<TabType>("hand");
   const [selectedCard, setSelectedCard] = useState<PlayerCharacterCard | null>(null);
   const [isKickModalOpen, setIsKickModalOpen] = useState(false);
+  const [isLeaveModalOpen, setIsLeaveModalOpen] = useState(false);
 
   const currentTurnPlayer = room.players.find(
     (p) => p.id === room.currentTurnPlayerId
@@ -245,7 +246,7 @@ export function InGameView({
               room={room}
               currentPlayer={currentPlayer}
               onKickClick={() => setIsKickModalOpen(true)}
-              onLeaveRoom={onLeaveRoom}
+              onLeaveRoom={() => setIsLeaveModalOpen(true)}
               onSkipTurn={onSkipTurn}
               onEndTurn={onEndTurn}
             />
@@ -269,7 +270,7 @@ export function InGameView({
             room={room}
             currentPlayer={currentPlayer}
             onKickClick={() => setIsKickModalOpen(true)}
-            onLeaveRoom={onLeaveRoom}
+            onLeaveRoom={() => setIsLeaveModalOpen(true)}
             onSkipTurn={onSkipTurn}
             onEndTurn={onEndTurn}
           />
@@ -292,12 +293,53 @@ export function InGameView({
             room={room}
             currentPlayer={currentPlayer}
             onKickClick={() => setIsKickModalOpen(true)}
-            onLeaveRoom={onLeaveRoom}
+            onLeaveRoom={() => setIsLeaveModalOpen(true)}
             onSkipTurn={onSkipTurn}
             onEndTurn={onEndTurn}
           />
         </div>
       </div>
+
+      {/* Leave Game Confirmation Modal (Centered on entire screen) */}
+      {isLeaveModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-sm animate-in fade-in duration-150">
+          <div className="w-full max-w-sm bg-zinc-900 border border-zinc-800 rounded-3xl p-6 shadow-2xl text-center relative animate-in zoom-in-95 duration-150">
+            <button
+              onClick={() => setIsLeaveModalOpen(false)}
+              className="absolute top-4 right-4 text-zinc-400 hover:text-white p-1 rounded-full bg-zinc-800 cursor-pointer"
+            >
+              <X className="w-5 h-5" />
+            </button>
+
+            <h3 className="text-lg font-bold text-white mb-2">
+              Покинути гру?
+            </h3>
+
+            <p className="text-xs text-zinc-400 mb-6 leading-relaxed">
+              Вашого персонажа буде видалено з бункера, а сесію завершено.
+            </p>
+
+            <div className="space-y-2">
+              <button
+                onClick={() => {
+                  setIsLeaveModalOpen(false);
+                  onLeaveRoom();
+                }}
+                className="w-full py-3 bg-red-600 hover:bg-red-500 text-white font-bold text-xs uppercase tracking-wider rounded-xl transition-all active:scale-98 cursor-pointer"
+              >
+                Так, вийти
+              </button>
+
+              <button
+                onClick={() => setIsLeaveModalOpen(false)}
+                className="w-full py-2.5 bg-zinc-950 hover:bg-zinc-800 border border-zinc-800 text-zinc-400 hover:text-white font-medium text-xs rounded-xl transition-all cursor-pointer"
+              >
+                Скасувати
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Modal for casting vote */}
       <KickModal

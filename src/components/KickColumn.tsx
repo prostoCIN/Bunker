@@ -2,7 +2,7 @@
 
 import React, { useState } from "react";
 import { GameRoom, Player } from "@/types/game";
-import { LogOut, X, Lock, Scale, Radio, Clock, SkipForward } from "lucide-react";
+import { LogOut, Lock, Scale, Radio, Clock, SkipForward } from "lucide-react";
 
 interface KickColumnProps {
   room: GameRoom;
@@ -21,8 +21,6 @@ export function KickColumn({
   onSkipTurn,
   onEndTurn,
 }: KickColumnProps) {
-  const [showLeaveConfirm, setShowLeaveConfirm] = useState(false);
-
   const votes = room.votes || {};
   const activePlayers = room.players.filter((p) => !p.isEliminated);
   const votedCount = activePlayers.filter((p) => votes[p.id]).length;
@@ -171,54 +169,13 @@ export function KickColumn({
         </button>
 
         <button
-          onClick={() => setShowLeaveConfirm(true)}
+          onClick={onLeaveRoom}
           className="w-full py-2.5 px-4 bg-zinc-950/40 hover:bg-zinc-800/60 border border-zinc-800/60 text-zinc-400 hover:text-white rounded-xl text-xs font-medium transition-all cursor-pointer flex items-center justify-center gap-1.5"
         >
           <LogOut className="w-3.5 h-3.5" />
           <span>Покинути лобі</span>
         </button>
       </div>
-
-      {/* Leave Confirmation Overlay Modal */}
-      {showLeaveConfirm && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-sm animate-in fade-in duration-150">
-          <div className="w-full max-w-sm bg-zinc-900 border border-zinc-800 rounded-3xl p-6 shadow-2xl text-center relative animate-in zoom-in-95 duration-150">
-            <button
-              onClick={() => setShowLeaveConfirm(false)}
-              className="absolute top-4 right-4 text-zinc-400 hover:text-white p-1 rounded-full bg-zinc-800 cursor-pointer"
-            >
-              <X className="w-5 h-5" />
-            </button>
-
-            <h3 className="text-lg font-bold text-white mb-2">
-              Покинути гру?
-            </h3>
-
-            <p className="text-xs text-zinc-400 mb-6 leading-relaxed">
-              Вашого персонажа буде видалено з бункера, а сесію завершено.
-            </p>
-
-            <div className="space-y-2">
-              <button
-                onClick={() => {
-                  setShowLeaveConfirm(false);
-                  onLeaveRoom();
-                }}
-                className="w-full py-3 bg-red-600 hover:bg-red-500 text-white font-bold text-xs uppercase tracking-wider rounded-xl transition-all active:scale-98 cursor-pointer"
-              >
-                Так, вийти
-              </button>
-
-              <button
-                onClick={() => setShowLeaveConfirm(false)}
-                className="w-full py-2.5 bg-zinc-950 hover:bg-zinc-800 border border-zinc-800 text-zinc-400 hover:text-white font-medium text-xs rounded-xl transition-all cursor-pointer"
-              >
-                Скасувати
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }

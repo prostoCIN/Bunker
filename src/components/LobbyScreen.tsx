@@ -9,7 +9,8 @@ import {
   Share2, 
   LogOut, 
   CheckCircle2, 
-  Clock 
+  Clock,
+  X 
 } from "lucide-react";
 import { getRandomCatastrophe } from "@/data/catastrophes";
 
@@ -32,6 +33,7 @@ export function LobbyScreen({
 }: LobbyScreenProps) {
   const [copied, setCopied] = useState(false);
   const [copiedLink, setCopiedLink] = useState(false);
+  const [showLeaveConfirm, setShowLeaveConfirm] = useState(false);
 
   const readyCount = room.players.filter((p) => p.isReady).length;
   const totalCount = room.players.length;
@@ -78,7 +80,7 @@ export function LobbyScreen({
         </div>
 
         <button
-          onClick={onLeaveRoom}
+          onClick={() => setShowLeaveConfirm(true)}
           className="text-xs text-zinc-400 hover:text-white flex items-center gap-1.5 transition-colors px-3 py-1.5 rounded-xl bg-zinc-900 border border-zinc-800 cursor-pointer"
         >
           <LogOut className="w-3.5 h-3.5" />
@@ -205,6 +207,47 @@ export function LobbyScreen({
           </div>
         )}
       </div>
+
+      {/* Leave Lobby Confirmation Modal (Centered on entire screen) */}
+      {showLeaveConfirm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-sm animate-in fade-in duration-150">
+          <div className="w-full max-w-sm bg-zinc-900 border border-zinc-800 rounded-3xl p-6 shadow-2xl text-center relative animate-in zoom-in-95 duration-150">
+            <button
+              onClick={() => setShowLeaveConfirm(false)}
+              className="absolute top-4 right-4 text-zinc-400 hover:text-white p-1 rounded-full bg-zinc-800 cursor-pointer"
+            >
+              <X className="w-5 h-5" />
+            </button>
+
+            <h3 className="text-lg font-bold text-white mb-2">
+              Покинути лобі?
+            </h3>
+
+            <p className="text-xs text-zinc-400 mb-6 leading-relaxed">
+              Ви вийдете з поточної кімнати та повернетеся на головний екран.
+            </p>
+
+            <div className="space-y-2">
+              <button
+                onClick={() => {
+                  setShowLeaveConfirm(false);
+                  onLeaveRoom();
+                }}
+                className="w-full py-3 bg-red-600 hover:bg-red-500 text-white font-bold text-xs uppercase tracking-wider rounded-xl transition-all active:scale-98 cursor-pointer"
+              >
+                Так, вийти
+              </button>
+
+              <button
+                onClick={() => setShowLeaveConfirm(false)}
+                className="w-full py-2.5 bg-zinc-950 hover:bg-zinc-800 border border-zinc-800 text-zinc-400 hover:text-white font-medium text-xs rounded-xl transition-all cursor-pointer"
+              >
+                Скасувати
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
