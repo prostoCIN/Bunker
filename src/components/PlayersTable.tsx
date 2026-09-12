@@ -92,13 +92,6 @@ export function PlayersTable({
               !player.isEliminated &&
               playerAliveIdx === nextTurnIdx;
 
-            const isWaitingTurn =
-              room.turnPhase === "presenting" &&
-              !player.isEliminated &&
-              !isCurrentTurn &&
-              !hasAlreadyPresented &&
-              !isNextTurn;
-
             const allRevealed =
               Boolean(player.cards &&
               player.cards.length > 0 &&
@@ -109,7 +102,7 @@ export function PlayersTable({
                 key={player.id}
                 className={`p-4 sm:p-5 rounded-2xl border transition-all ${
                   isCurrentTurn
-                    ? "bg-zinc-900/90 border-amber-500/80 shadow-lg shadow-amber-950/30 ring-1 ring-amber-500/30"
+                    ? "bg-zinc-900 border-amber-500/70"
                     : isSelf
                     ? "bg-zinc-950/60 border-emerald-500/30"
                     : "bg-zinc-950/40 border-zinc-800/50"
@@ -128,7 +121,7 @@ export function PlayersTable({
                   {/* Turn progression badge in table */}
                   {isCurrentTurn && (
                     <div className="flex items-center gap-1">
-                      <span className="text-[10px] font-bold text-amber-300 bg-amber-950/90 border border-amber-500/60 px-2 py-0.5 rounded-md animate-pulse">
+                      <span className="text-[10px] font-bold text-amber-300 bg-amber-950/60 border border-amber-500/40 px-2 py-0.5 rounded-md">
                         🎯 Зараз ходить
                       </span>
                       {currentPlayer.isHost && onSkipTurn && (
@@ -153,12 +146,6 @@ export function PlayersTable({
                   {isNextTurn && !allRevealed && (
                     <span className="text-[10px] font-medium text-amber-400/80 bg-zinc-900 border border-amber-500/20 px-2 py-0.5 rounded-md">
                       ⏳ Наступний
-                    </span>
-                  )}
-
-                  {isWaitingTurn && !allRevealed && (
-                    <span className="text-[10px] font-medium text-zinc-500 bg-zinc-900/80 border border-zinc-800 px-2 py-0.5 rounded-md">
-                      В черзі
                     </span>
                   )}
 
