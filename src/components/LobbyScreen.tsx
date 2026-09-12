@@ -10,9 +10,11 @@ import {
   Share2, 
   ShieldCheck, 
   LogOut, 
-  Radio, 
   CheckCircle2, 
-  Clock 
+  Clock,
+  Play,
+  Flame,
+  Sparkles
 } from "lucide-react";
 import { getRandomCatastrophe } from "@/data/catastrophes";
 
@@ -38,7 +40,11 @@ export function LobbyScreen({
 
   const readyCount = room.players.filter((p) => p.isReady).length;
   const totalCount = room.players.length;
-  const isHost = currentPlayer.isHost;
+  
+  // Robust check for host: either isHost flag or first player in room
+  const isHost =
+    currentPlayer.isHost ||
+    (room.players.length > 0 && room.players[0].id === currentPlayer.id);
 
   const handleCopyCode = async () => {
     try {
@@ -165,7 +171,7 @@ export function LobbyScreen({
                   <span className="font-medium truncate max-w-[120px]">
                     {player.name} {player.id === currentPlayer.id && "(Ви)"}
                   </span>
-                  {player.isHost && (
+                  {(player.isHost || player.id === room.players[0]?.id) && (
                     <span className="text-[10px] bg-amber-500/20 text-amber-300 px-1 rounded font-semibold">
                       Хост
                     </span>
@@ -182,43 +188,62 @@ export function LobbyScreen({
         </div>
       </div>
 
-      {/* Bottom Controls: Ready Button & People counter */}
+      {/* Bottom Controls */}
       <div className="w-full mt-5 space-y-3">
-        {/* Main "Ready" Button */}
-        <button
-          onClick={onToggleReady}
-          className={`w-full py-4 rounded-2xl font-bold text-lg flex items-center justify-center gap-3 transition-all transform active:scale-98 shadow-xl cursor-pointer ${
-            currentPlayer.isReady
-              ? "bg-gradient-to-r from-emerald-600 to-green-600 text-white shadow-emerald-900/40 border-2 border-emerald-400"
-              : "bg-gradient-to-r from-zinc-800 to-zinc-700 text-zinc-100 hover:from-zinc-700 hover:to-zinc-600 border border-zinc-600"
-          }`}
-        >
-          {currentPlayer.isReady ? (
-            <>
-              <CheckCircle2 className="w-6 h-6 text-white animate-bounce" />
-              <span>ГОТОВИЙ ({readyCount}/{totalCount})</span>
-            </>
-          ) : (
-            <>
-              <ShieldCheck className="w-6 h-6 text-emerald-400" />
-              <span>Я ГОТОВИЙ ({readyCount}/{totalCount})</span>
-            </>
-          )}
-        </button>
-
-        {/* Host action if all ready or host wants to start */}
-        {isHost && (
-          <div className="text-center">
-            <p className="text-xs text-zinc-500 mb-1">
-              Ви — організатор сховища
-            </p>
+        {/* If solo host (1 player): Direct Big Solo Start Button */}
+        {isHost && totalCount === 1 ? (
+          <div className="space-y-2">
             <button
               onClick={onStartGame}
-              className="w-full py-3.5 rounded-2xl bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-400 hover:to-yellow-400 text-zinc-950 font-black text-sm uppercase tracking-wider transition-all shadow-lg active:scale-98 cursor-pointer"
+              className="w-full py-4 rounded-2xl font-black text-base uppercase tracking-wider flex items-center justify-center gap-2.5 bg-gradient-to-r from-amber-500 via-yellow-500 to-amber-500 hover:from-amber-400 hover:to-yellow-400 text-zinc-950 border-2 border-yellow-300 shadow-xl shadow-amber-950/40 active:scale-98 transition-all cursor-pointer"
             >
-              Зачинити гермодвері & Почати гру
+              <Play className="w-5 h-5 fill-current" />
+              <span>Почати гру (Соло тест)</span>
             </button>
+            <p className="text-center text-xs text-zinc-400">
+              Ви один у лобі — можна відразу запустити й протестувати руку та картки
+            </p>
           </div>
+        ) : (
+          <>
+            {/* Main "Ready" Button */}
+            <button
+              onClick={onToggleReady}
+              className={`w-full py-4 rounded-2xl font-bold text-lg flex items-center justify-center gap-3 transition-all transform active:scale-98 shadow-xl cursor-pointer ${
+                currentPlayer.isReady
+                  ? "bg-gradient-to-r from-emerald-600 to-green-600 text-white shadow-emerald-900/40 border-2 border-emerald-400"
+                  : "bg-gradient-to-r from-zinc-800 to-zinc-700 text-zinc-100 hover:from-zinc-700 hover:to-zinc-600 border border-zinc-600"
+              }`}
+            >
+              {currentPlayer.isReady ? (
+                <>
+                  <CheckCircle2 className="w-6 h-6 text-white animate-bounce" />
+                  <span>ГОТОВИЙ ({readyCount}/{totalCount})</span>
+                </>
+              ) : (
+                <>
+                  <ShieldCheck className="w-6 h-6 text-emerald-400" />
+                  <span>Я ГОТОВИЙ ({readyCount}/{totalCount})</span>
+                </>
+              )}
+            </button>
+
+            {/* Host action if in group */}
+            {isHost && (
+              <div className="text-center pt-1">
+                <button
+                  onClick={onStartGame}
+                  className="w-full py-3.5 rounded-2xl bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-400 hover:to-yellow-400 text-zinc-950 font-black text-sm uppercase tracking-wider transition-all shadow-lg active:scale-98 cursor-pointer flex items-center justify-center gap-2"
+                >
+                  <Flame className="w-4 h-4 fill-current" />
+                  <span>Зачинити гермодвері & Почати гру</span>
+                </button>
+                <p className="text-[11px] text-zinc-500 mt-1">
+                  Ви — організатор сховища
+                </p>
+              </div>
+            )}
+          </>
         )}
       </div>
     </div>
