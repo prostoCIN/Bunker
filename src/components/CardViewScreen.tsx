@@ -108,12 +108,12 @@ export function CardViewScreen({
   const selectedTargetPlayer = room?.players.find((p) => p.id === selectedTargetId);
 
   return (
-    <div className="w-full h-full flex flex-col justify-between items-center py-2 px-1 overflow-y-auto relative min-h-0 custom-scrollbar">
+    <div className="w-full h-full flex flex-col justify-between items-center relative min-h-0 overflow-hidden">
       {/* Top Bar: Minimal Back Button */}
-      <div className="w-full flex items-center justify-between mb-3">
+      <div className="w-full flex items-center justify-between pb-2 shrink-0">
         <button
           onClick={onBack}
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 text-zinc-300 hover:text-white hover:-translate-x-0.5 transition-all text-xs font-semibold cursor-pointer active:scale-95"
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 text-zinc-300 hover:text-white hover:scale-[0.985] active:scale-[0.95] transition-all text-xs font-semibold cursor-pointer"
         >
           <ArrowLeft className="w-4 h-4" />
           <span>Назад</span>
@@ -123,47 +123,49 @@ export function CardViewScreen({
           <span className={`text-[10px] font-mono font-semibold px-2 py-0.5 rounded-md border shrink-0 ${
             card.isUsed
               ? "bg-zinc-800/60 border-zinc-700/40 text-zinc-400"
-              : "bg-amber-950/50 border-amber-500/30 text-amber-300 animate-pulse"
+              : isMyTurn && !isVotingPhase
+              ? "bg-amber-950/50 border-amber-500/30 text-amber-300 animate-pulse"
+              : "bg-zinc-800/40 border-zinc-700/30 text-zinc-500"
           }`}>
-            {card.isUsed ? "✓ Використано" : "⚡ Готова до застосування"}
+            {card.isUsed ? "✓ Використано" : isMyTurn && !isVotingPhase ? "⚡ Готова до застосування" : "Спецдія"}
           </span>
         )}
       </div>
 
-      {/* Center: The Minimalist 3D Card */}
-      <div className="w-full my-auto flex flex-col items-center perspective-1000">
+      {/* Center: The Minimalist 3D Card (Dynamically adapts to available column height) */}
+      <div className="w-full flex-1 min-h-0 my-auto flex items-center justify-center perspective-1000 py-1 overflow-hidden">
         <div
           onClick={() => setIsFlipped(!isFlipped)}
-          className={`w-full max-w-xs sm:max-w-sm aspect-[3/4.2] relative cursor-pointer select-none transform-style-3d transition-all duration-500 ease-out hover:scale-[0.985] active:scale-[0.95] ${
+          className={`h-full max-h-[440px] w-auto max-w-full aspect-[3/4.2] relative cursor-pointer select-none transform-style-3d transition-all duration-500 ease-out hover:scale-[0.985] active:scale-[0.95] ${
             isFlipped ? "rotate-y-180" : ""
           }`}
         >
           {/* ================= СОРОЧКА КАРТКИ (РУБАШКА) ================= */}
-          <div className="absolute inset-0 w-full h-full rounded-3xl p-6 sm:p-7 shadow-2xl flex flex-col justify-between border bg-zinc-900 border-zinc-800 hover:border-zinc-700 backface-hidden">
+          <div className="absolute inset-0 w-full h-full rounded-2xl sm:rounded-3xl p-4 sm:p-5 shadow-2xl flex flex-col justify-between border bg-zinc-900 border-zinc-800 hover:border-zinc-700 backface-hidden">
             <div className="h-full flex flex-col justify-between items-center text-center">
               {/* Тип картки зверху */}
-              <span className="text-xs font-mono uppercase tracking-widest text-zinc-500">
+              <span className="text-[10px] sm:text-xs font-mono uppercase tracking-widest text-zinc-500 shrink-0">
                 {card.categoryName}
               </span>
 
               {/* Велика іконка по центру */}
-              <div className="my-auto flex flex-col items-center gap-3">
-                <span className="text-5xl sm:text-6xl drop-shadow-md">
+              <div className="my-auto flex flex-col items-center gap-2 sm:gap-3">
+                <span className="text-4xl sm:text-5xl lg:text-6xl drop-shadow-md">
                   {card.icon}
                 </span>
-                <span className="text-xs font-mono text-zinc-500 uppercase tracking-wider">
+                <span className="text-[10px] sm:text-xs font-mono text-zinc-500 uppercase tracking-wider">
                   Натисніть для перегляду
                 </span>
               </div>
 
               {/* Чистий низ */}
-              <div className="w-8 h-1 bg-zinc-800 rounded-full" />
+              <div className="w-8 h-1 bg-zinc-800 rounded-full shrink-0" />
             </div>
           </div>
 
           {/* ================= ЛИЦЬОВА СТОРОНА (ВМІСТ) ================= */}
           <div
-            className={`absolute inset-0 w-full h-full rounded-3xl p-6 sm:p-7 shadow-2xl flex flex-col justify-between border backface-hidden rotate-y-180 ${
+            className={`absolute inset-0 w-full h-full rounded-2xl sm:rounded-3xl p-4 sm:p-5 shadow-2xl flex flex-col justify-between border backface-hidden rotate-y-180 ${
               isSpecial
                 ? "bg-zinc-950 border-amber-500/60 shadow-amber-950/20 hover:border-amber-400"
                 : "bg-zinc-950 border-zinc-700 shadow-black hover:border-zinc-500"
@@ -171,11 +173,11 @@ export function CardViewScreen({
           >
             <div className="h-full flex flex-col justify-between text-left">
               {/* Тип картки зверху */}
-              <div className="flex items-center justify-between">
-                <div className={`flex items-center gap-2 text-xs font-mono uppercase tracking-wider ${
+              <div className="flex items-center justify-between shrink-0">
+                <div className={`flex items-center gap-2 text-[10px] sm:text-xs font-mono uppercase tracking-wider ${
                   isSpecial ? "text-amber-400" : "text-emerald-400"
                 }`}>
-                  <span className="text-base">{card.icon}</span>
+                  <span className="text-sm sm:text-base">{card.icon}</span>
                   <span>{card.categoryName}</span>
                 </div>
 
@@ -187,31 +189,31 @@ export function CardViewScreen({
               </div>
 
               {/* Вміст картки (Значення + Опис) */}
-              <div className="my-auto space-y-3">
-                <h2 className="text-2xl sm:text-3xl font-black text-white leading-tight">
+              <div className="my-auto space-y-1.5 sm:space-y-2 overflow-y-auto custom-scrollbar py-1 min-h-0">
+                <h2 className="text-lg sm:text-xl 2xl:text-2xl font-black text-white leading-tight">
                   {card.value}
                 </h2>
 
                 {card.description && (
-                  <p className="text-sm sm:text-base text-zinc-300 leading-relaxed font-normal">
+                  <p className="text-xs sm:text-sm text-zinc-300 leading-relaxed font-normal">
                     {card.description}
                   </p>
                 )}
               </div>
 
               {/* Чистий низ */}
-              <div className="w-8 h-1 bg-zinc-800 rounded-full" />
+              <div className="w-8 h-1 bg-zinc-800 rounded-full shrink-0" />
             </div>
           </div>
         </div>
       </div>
 
-      {/* Bottom: ACTION BUTTONS */}
-      <div className="w-full max-w-xs sm:max-w-sm flex flex-col gap-2.5 mt-4">
+      {/* Bottom: ACTION BUTTONS (Always visible without scrolling) */}
+      <div className="w-full max-w-xs sm:max-w-sm flex flex-col gap-2 pt-2 shrink-0">
         {/* Кнопка 1: Перевернути картку (сорочка/вміст) */}
         <button
           onClick={() => setIsFlipped(!isFlipped)}
-          className="w-full py-3 px-4 rounded-xl font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-2 bg-zinc-900 hover:bg-zinc-800 hover:border-zinc-700 hover:scale-[0.985] text-zinc-200 border border-zinc-800 active:scale-[0.95] transition-all cursor-pointer shadow-sm"
+          className="w-full py-2.5 sm:py-3 px-4 rounded-xl font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-2 bg-zinc-900 hover:bg-zinc-800 hover:border-zinc-700 hover:scale-[0.985] text-zinc-200 border border-zinc-800 active:scale-[0.95] transition-all cursor-pointer shadow-sm"
         >
           {isFlipped ? (
             <>
@@ -231,7 +233,7 @@ export function CardViewScreen({
           <button
             onClick={handleStartApply}
             disabled={!canApplySpecial || isApplying}
-            className={`w-full py-3.5 px-4 rounded-xl font-black text-xs uppercase tracking-wider flex items-center justify-center gap-2 transition-all cursor-pointer shadow-lg ${
+            className={`w-full py-2.5 sm:py-3 px-4 rounded-xl font-black text-xs uppercase tracking-wider flex items-center justify-center gap-2 transition-all cursor-pointer shadow-lg ${
               card.isUsed
                 ? "bg-zinc-900 border border-zinc-800 text-zinc-500 cursor-not-allowed"
                 : !canApplySpecial
@@ -266,7 +268,7 @@ export function CardViewScreen({
           <button
             onClick={handleRevealToAll}
             disabled={!canReveal}
-            className={`w-full py-3 px-4 rounded-xl font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-2 transition-all cursor-pointer ${
+            className={`w-full py-2.5 sm:py-3 px-4 rounded-xl font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-2 transition-all cursor-pointer ${
               card.isRevealedToAll
                 ? "bg-zinc-900 border border-zinc-800 text-zinc-500 cursor-not-allowed"
                 : !canReveal

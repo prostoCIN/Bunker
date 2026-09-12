@@ -92,7 +92,7 @@ export function InGameView({
   const renderHandContent = () => {
     if (selectedCard) {
       return (
-        <div className="w-full h-full flex flex-col min-h-0 overflow-hidden">
+        <div className="w-full flex flex-col h-full bg-zinc-900/60 border border-zinc-800/80 rounded-3xl p-4 sm:p-5 xl:p-6 shadow-xl backdrop-blur-md overflow-hidden min-h-0">
           <CardViewScreen
             card={selectedCard}
             room={room}
