@@ -38,7 +38,6 @@ export function CardViewScreen({
 }: CardViewScreenProps) {
   const isSpecial = card.category === "special";
   const [isFlipped, setIsFlipped] = useState(card.isRevealedToAll || isSpecial);
-  const [justRevealed, setJustRevealed] = useState(false);
   const [isApplying, setIsApplying] = useState(false);
 
   // Modals state for special action
@@ -65,8 +64,6 @@ export function CardViewScreen({
   const handleRevealToAll = () => {
     setIsFlipped(true);
     onRevealToAll(card.id);
-    setJustRevealed(true);
-    setTimeout(() => setJustRevealed(false), 2500);
   };
 
   const handleStartApply = () => {
@@ -194,14 +191,6 @@ export function CardViewScreen({
             </div>
           )}
         </div>
-
-        {/* Feedback alert after revealing */}
-        {justRevealed && (
-          <div className="mt-3 flex items-center gap-1.5 text-xs text-emerald-400 font-bold bg-emerald-950/80 border border-emerald-500 px-3 py-1.5 rounded-xl animate-in fade-in slide-in-from-bottom-2">
-            <Check className="w-4 h-4" />
-            <span>Картку відкрито для всіх гравців!</span>
-          </div>
-        )}
       </div>
 
       {/* Bottom: ACTION BUTTONS */}
