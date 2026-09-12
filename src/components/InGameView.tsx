@@ -12,19 +12,22 @@ import {
   Lock, 
   Flame, 
   ChevronLeft, 
-  ArrowRightLeft 
+  ArrowRightLeft,
+  LogOut
 } from "lucide-react";
 
 interface InGameViewProps {
   room: GameRoom;
   currentPlayer: Player;
   onRevealCardToAll: (cardId: string) => void;
+  onLeaveRoom: () => void;
 }
 
 export function InGameView({
   room,
   currentPlayer,
   onRevealCardToAll,
+  onLeaveRoom,
 }: InGameViewProps) {
   // Mobile active tab: "table" (Стіл) or "hand" (Моя рука)
   const [activeTab, setActiveTab] = useState<"table" | "hand">("hand");
@@ -99,9 +102,18 @@ export function InGameView({
             </h2>
           </div>
 
-          <span className="text-xs text-zinc-400 font-mono">
-            Відкрито: <b className="text-emerald-400">{revealedCount}</b> / {cards.length}
-          </span>
+          <div className="flex items-center gap-2">
+            <span className="text-xs text-zinc-400 font-mono">
+              Відкрито: <b className="text-emerald-400">{revealedCount}</b> / {cards.length}
+            </span>
+            <button
+              onClick={onLeaveRoom}
+              title="Покинути бункер"
+              className="p-1.5 rounded-lg bg-zinc-950 border border-zinc-800 text-zinc-500 hover:text-red-400 active:scale-95 transition-colors cursor-pointer"
+            >
+              <LogOut className="w-3.5 h-3.5" />
+            </button>
+          </div>
         </div>
 
         {/* List of Parameter Plates */}

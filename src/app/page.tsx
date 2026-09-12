@@ -1,9 +1,8 @@
 "use client";
 
-import React, { useState, useEffect, Suspense } from "react";
+import React, { useState, useEffect, Suspense, useCallback } from "react";
 import { useSearchParams } from "next/navigation";
 import { GameRoom, Player } from "@/types/game";
-import { PlayerCharacterCard } from "@/data/characterData";
 import { LobbyScreen } from "@/components/LobbyScreen";
 import { InGameView } from "@/components/InGameView";
 import { JoinModal } from "@/components/JoinModal";
@@ -24,12 +23,68 @@ function GameApp() {
   const [playerName, setPlayerName] = useState<string>("");
   const [currentPlayer, setCurrentPlayer] = useState<Player | null>(null);
   const [currentRoom, setCurrentRoom] = useState<GameRoom | null>(null);
-  const [selectedCard, setSelectedCard] = useState<PlayerCharacterCard | null>(null);
   const [isJoinModalOpen, setIsJoinModalOpen] = useState(false);
   const [joinError, setJoinError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
-  // Initialize player identity
+  const handleRoomSync = useCallback((updatedRoom: GameRoom) => {
+    // If room was deleted or has 0 players, return to home
+    if (!updatedRoom || !updatedRoom.players || updatedRoom.players.length === 0) {
+      setCurrentRoom(null);
+      localStorage.removeItem("bunker_active_room_code");
+      window.history.replaceState(null, "", "/");
+      return;
+    }
+
+    setCurrentRoom(updatedRoom);
+    setCurrentPlayer((prev) => {
+      if (!prev) return prev;
+      const updatedSelf = updatedRoom.players.find((p) => p.id === prev.id);
+      return updatedSelf || prev;
+    });
+  }, []);
+
+  const restoreSession = useCallback(
+    async (code: string, activePlayer: Player) => {
+      setIsLoading(true);
+      try {
+        const room = await roomManager.getRoom(code);
+        if (!room) {
+          // Room deleted or empty
+          localStorage.removeItem("bunker_active_room_code");
+          window.history.replaceState(null, "", "/");
+          return;
+        }
+
+        const existingPlayer = room.players.find((p) => p.id === activePlayer.id);
+        if (existingPlayer) {
+          setCurrentPlayer(existingPlayer);
+          setCurrentRoom(room);
+          localStorage.setItem("bunker_active_room_code", room.code);
+          window.history.replaceState(null, "", `?room=${room.code}`);
+          roomManager.initChannel(room.code, handleRoomSync);
+        } else {
+          // New player connecting via URL code
+          const updated = await roomManager.joinRoom(code, activePlayer);
+          if (updated) {
+            const selfInRoom = updated.players.find((p) => p.id === activePlayer.id);
+            if (selfInRoom) setCurrentPlayer(selfInRoom);
+            setCurrentRoom(updated);
+            localStorage.setItem("bunker_active_room_code", updated.code);
+            window.history.replaceState(null, "", `?room=${updated.code}`);
+            roomManager.initChannel(updated.code, handleRoomSync);
+          }
+        }
+      } catch (err) {
+        console.error("Session restore error:", err);
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    [handleRoomSync]
+  );
+
+  // Initialize player identity & auto-restore session on refresh
   useEffect(() => {
     const savedId =
       localStorage.getItem("bunker_player_id") ||
@@ -50,11 +105,15 @@ function GameApp() {
     };
     setCurrentPlayer(player);
 
-    const joinCode = searchParams.get("join");
-    if (joinCode) {
-      handleJoinByCode(joinCode.toUpperCase(), player);
+    const activeCode =
+      searchParams.get("room") ||
+      searchParams.get("join") ||
+      localStorage.getItem("bunker_active_room_code");
+
+    if (activeCode) {
+      restoreSession(activeCode.toUpperCase(), player);
     }
-  }, [searchParams]);
+  }, [searchParams, restoreSession]);
 
   // Sync player name changes
   const handleNameChange = (newName: string) => {
@@ -68,22 +127,6 @@ function GameApp() {
   const handleRandomizeName = () => {
     const random = generateRandomName();
     handleNameChange(random);
-  };
-
-  const handleRoomSync = (updatedRoom: GameRoom) => {
-    setCurrentRoom(updatedRoom);
-    if (currentPlayer) {
-      const updatedSelf = updatedRoom.players.find((p) => p.id === currentPlayer.id);
-      if (updatedSelf) {
-        setCurrentPlayer(updatedSelf);
-        if (selectedCard && updatedSelf.cards) {
-          const freshCard = updatedSelf.cards.find((c) => c.id === selectedCard.id);
-          if (freshCard) {
-            setSelectedCard(freshCard);
-          }
-        }
-      }
-    }
   };
 
   // Create Lobby
@@ -100,6 +143,9 @@ function GameApp() {
       const room = await roomManager.createRoom(host);
       setCurrentPlayer(host);
       setCurrentRoom(room);
+
+      localStorage.setItem("bunker_active_room_code", room.code);
+      window.history.replaceState(null, "", `?room=${room.code}`);
 
       roomManager.initChannel(room.code, handleRoomSync);
     } finally {
@@ -121,7 +167,7 @@ function GameApp() {
       const room = await roomManager.getRoom(code);
       if (!room) {
         setJoinError(
-          `Лобі з кодом "${code}" не знайдено. Перевірте код або створіть нове.`
+          `Лобі з кодом "${code}" не знайдено або вже видалено.`
         );
         return;
       }
@@ -134,6 +180,9 @@ function GameApp() {
 
         const selfInRoom = updatedRoom.players.find((p) => p.id === playerToJoin.id);
         if (selfInRoom) setCurrentPlayer(selfInRoom);
+
+        localStorage.setItem("bunker_active_room_code", updatedRoom.code);
+        window.history.replaceState(null, "", `?room=${updatedRoom.code}`);
 
         roomManager.initChannel(code, handleRoomSync);
       }
@@ -183,11 +232,15 @@ function GameApp() {
     }
   };
 
-  // Leave Room
-  const handleLeaveRoom = () => {
+  // Leave Room (with automatic 0-player deletion)
+  const handleLeaveRoom = async () => {
+    if (currentRoom && currentPlayer) {
+      await roomManager.leaveRoom(currentRoom.code, currentPlayer.id);
+    }
     roomManager.cleanup();
+    localStorage.removeItem("bunker_active_room_code");
+    window.history.replaceState(null, "", "/");
     setCurrentRoom(null);
-    setSelectedCard(null);
     if (currentPlayer) {
       setCurrentPlayer({ ...currentPlayer, isHost: false, isReady: false });
     }
@@ -210,6 +263,7 @@ function GameApp() {
         room={currentRoom}
         currentPlayer={currentPlayer}
         onRevealCardToAll={handleRevealToAll}
+        onLeaveRoom={handleLeaveRoom}
       />
     );
   }

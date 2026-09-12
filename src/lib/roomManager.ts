@@ -104,6 +104,11 @@ export class RoomManager {
 
         if (data && !error) {
           const room = data as GameRoom;
+          // If room has 0 players, automatically clean it up from DB
+          if (!room.players || room.players.length === 0) {
+            await this.deleteRoom(cleanCode);
+            return null;
+          }
           this.saveLocalRoom(room);
           return room;
         } else if (error) {
@@ -115,7 +120,48 @@ export class RoomManager {
     }
 
     // 2. Fallback to local storage
-    return this.getLocalRoom(cleanCode);
+    const local = this.getLocalRoom(cleanCode);
+    if (local && (!local.players || local.players.length === 0)) {
+      await this.deleteRoom(cleanCode);
+      return null;
+    }
+    return local;
+  }
+
+  async leaveRoom(code: string, playerId: string): Promise<void> {
+    const cleanCode = code.trim().toUpperCase();
+    const room = await this.getRoom(cleanCode);
+    if (!room) return;
+
+    const remainingPlayers = room.players.filter((p) => p.id !== playerId);
+
+    // If 0 players remain in room -> automatically DELETE room from database!
+    if (remainingPlayers.length === 0) {
+      await this.deleteRoom(cleanCode);
+      return;
+    }
+
+    // If leaving player was host, transfer host to next player
+    const wasHost = room.players.find((p) => p.id === playerId)?.isHost;
+    if (wasHost && remainingPlayers.length > 0) {
+      remainingPlayers[0].isHost = true;
+    }
+
+    room.players = remainingPlayers;
+    await this.updateRoom(room);
+  }
+
+  async deleteRoom(code: string): Promise<void> {
+    const cleanCode = code.trim().toUpperCase();
+    this.deleteLocalRoom(cleanCode);
+
+    if (supabase && isSupabaseConfigured) {
+      try {
+        await supabase.from("rooms").delete().eq("code", cleanCode);
+      } catch (err) {
+        console.error("Supabase delete room error:", err);
+      }
+    }
   }
 
   async joinRoom(code: string, player: Player): Promise<GameRoom | null> {
@@ -239,6 +285,11 @@ export class RoomManager {
     if (this.localChannel) {
       this.localChannel.postMessage(room);
     }
+  }
+
+  private deleteLocalRoom(code: string) {
+    if (typeof window === "undefined") return;
+    localStorage.removeItem(`${STORAGE_PREFIX}${code}`);
   }
 
   cleanup() {
