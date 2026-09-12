@@ -35,6 +35,10 @@ export function PlayersTable({ room, currentPlayer }: PlayersTableProps) {
               room.currentTurnPlayerId === player.id &&
               room.turnPhase === "presenting" &&
               !player.isEliminated;
+            const allRevealed =
+              Boolean(player.cards &&
+              player.cards.length > 0 &&
+              player.cards.every((c) => c.isRevealedToAll));
 
             return (
               <div
@@ -59,6 +63,11 @@ export function PlayersTable({ room, currentPlayer }: PlayersTableProps) {
                   {isCurrentTurn && (
                     <span className="text-[10px] font-bold text-amber-300 bg-amber-950/90 border border-amber-500/60 px-2 py-0.5 rounded-md animate-pulse">
                       🎯 Зараз ходить
+                    </span>
+                  )}
+                  {allRevealed && !player.isEliminated && (
+                    <span className="text-[10px] font-medium text-zinc-400 bg-zinc-800/70 border border-zinc-700/60 px-2 py-0.5 rounded-md">
+                      ✓ Все відкрито
                     </span>
                   )}
                   {isSelf && (

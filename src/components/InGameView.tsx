@@ -245,9 +245,7 @@ export function InGameView({
               {isVotingPhase
                 ? "Всі учасники відкрили карти. Оберіть кандидата у колонці вигнання."
                 : isMyTurn
-                ? room.hasRevealedCardInTurn
-                  ? "Карту відкрито! Розкажіть іншим про свою користь і натисніть «Завершити хід»."
-                  : "Відкрийте хоча б одну карту з руки перед завершенням ходу."
+                ? "Оберіть та відкрийте будь-яку характеристику або застосуйте карту — хід завершиться автоматично."
                 : "Гравець виступає перед групою. Дочекайтеся своєї черги."}
             </p>
           </div>
@@ -264,23 +262,30 @@ export function InGameView({
             </button>
           )}
 
+          {isMyTurn && !isVotingPhase && activeTab !== "hand" && (
+            <button
+              onClick={() => setActiveTab("hand")}
+              className="md:hidden px-3 py-1.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-black text-xs font-bold transition flex items-center gap-1.5 cursor-pointer shadow-md shadow-emerald-950/40"
+            >
+              <Layers className="w-3.5 h-3.5" />
+              <span>До карт</span>
+            </button>
+          )}
+
           {isMyTurn && !isVotingPhase && (
+            <span className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-500/20 border border-emerald-500/40 text-emerald-300 text-xs font-semibold">
+              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
+              <span>Відкрийте карту для передачі ходу</span>
+            </span>
+          )}
+
+          {isMyTurn && !isVotingPhase && onEndTurn && (
             <button
               onClick={onEndTurn}
-              disabled={!room.hasRevealedCardInTurn}
-              title={
-                !room.hasRevealedCardInTurn
-                  ? "Спочатку відкрийте карту з руки"
-                  : "Завершити свій виступ і передати хід далі"
-              }
-              className={`px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-1.5 cursor-pointer ${
-                room.hasRevealedCardInTurn
-                  ? "bg-emerald-500 hover:bg-emerald-400 text-black shadow-md shadow-emerald-500/20 active:scale-98"
-                  : "bg-zinc-800/80 text-zinc-500 cursor-not-allowed opacity-60 border border-zinc-700/50"
-              }`}
+              title="Передати хід без відкриття карти"
+              className="px-2.5 py-1.5 rounded-xl bg-zinc-800/80 hover:bg-zinc-700 text-zinc-400 hover:text-white text-xs font-medium border border-zinc-700/60 transition flex items-center gap-1 cursor-pointer"
             >
-              <CheckCircle2 className="w-4 h-4" />
-              <span>Завершити хід</span>
+              <span>Пас</span>
             </button>
           )}
 

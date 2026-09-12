@@ -354,27 +354,85 @@ export class RoomManager {
       hasSecondChanceDuel: false,
       hasLastBullet: false,
     }));
-    const sortedAlive = [...room.players].sort(
-      (a, b) => (a.playerNumber || 0) - (b.playerNumber || 0)
-    );
-    const firstPlayer = sortedAlive[0];
 
     room.status = "in_game";
     room.roundNumber = 1;
     room.turnPhase = "presenting";
-    room.currentTurnPlayerId = firstPlayer ? firstPlayer.id : undefined;
-    room.hasRevealedCardInTurn = false;
     room.votes = {};
     delete room.rpsDuel;
     delete room.lastExpelledName;
-    room.lastActionMessage = firstPlayer
-      ? `🏁 Гра розпочалася! Раунд 1. Першим ходить #${firstPlayer.playerNumber} ${firstPlayer.name}.`
-      : undefined;
     delete room.doorsLocked;
     delete room.extraBunkerSpots;
 
+    const turnRes = this.advanceTurn(room);
+    if (turnRes.nextPlayer) {
+      let skipNote = "";
+      if (turnRes.skippedPlayerNames.length > 0) {
+        skipNote = ` (у ${turnRes.skippedPlayerNames.join(", ")} все відкрито — пропущено)`;
+      }
+      room.lastActionMessage = `🏁 Гра розпочалася! Раунд 1. Першим ходить #${turnRes.nextPlayer.playerNumber} ${turnRes.nextPlayer.name}.${skipNote}`;
+    } else {
+      room.lastActionMessage = `🏁 Гра розпочалася! Раунд 1. Усі характеристики вже відкрито — перехід до голосування.`;
+    }
+
     await this.updateRoom(room);
     return room;
+  }
+
+  /**
+   * Advances turn to the next alive player in circular order who still has unrevealed cards.
+   * If a player has all cards revealed, they are automatically skipped.
+   * If all players in the round have presented, transitions to "voting".
+   */
+  advanceTurn(
+    room: GameRoom,
+    fromPlayerId?: string
+  ): {
+    nextPlayer?: Player;
+    phaseChangedToVoting: boolean;
+    skippedPlayerNames: string[];
+  } {
+    const alivePlayers = room.players
+      .filter((p) => !p.isEliminated)
+      .sort((a, b) => (a.playerNumber || 0) - (b.playerNumber || 0));
+
+    if (alivePlayers.length === 0) {
+      room.currentTurnPlayerId = undefined;
+      return { phaseChangedToVoting: false, skippedPlayerNames: [] };
+    }
+
+    let startIndex = 0;
+    if (fromPlayerId) {
+      const currentIdx = alivePlayers.findIndex((p) => p.id === fromPlayerId);
+      startIndex = currentIdx !== -1 ? currentIdx + 1 : 0;
+    }
+
+    const skippedPlayerNames: string[] = [];
+    let nextPlayer: Player | undefined = undefined;
+
+    for (let i = startIndex; i < alivePlayers.length; i++) {
+      const p = alivePlayers[i];
+      const hasUnrevealedCards =
+        p.cards && p.cards.some((c) => !c.isRevealedToAll);
+      if (hasUnrevealedCards) {
+        nextPlayer = p;
+        break;
+      } else {
+        skippedPlayerNames.push(`#${p.playerNumber ?? "?"} ${p.name}`);
+      }
+    }
+
+    if (nextPlayer) {
+      room.turnPhase = "presenting";
+      room.currentTurnPlayerId = nextPlayer.id;
+      room.hasRevealedCardInTurn = false;
+      return { nextPlayer, phaseChangedToVoting: false, skippedPlayerNames };
+    } else {
+      room.turnPhase = "voting";
+      room.currentTurnPlayerId = undefined;
+      room.hasRevealedCardInTurn = false;
+      return { phaseChangedToVoting: true, skippedPlayerNames };
+    }
   }
 
   async revealCardToAll(
@@ -386,20 +444,45 @@ export class RoomManager {
     const room = await this.getRoom(cleanCode);
     if (!room) return null;
 
+    let revealedCategory = "";
+    let revealedValue = "";
+
     room.players = room.players.map((p) => {
       if (p.id === playerId && p.cards) {
         return {
           ...p,
-          cards: p.cards.map((c) =>
-            c.id === cardId ? { ...c, isRevealedToAll: true } : c
-          ),
+          cards: p.cards.map((c) => {
+            if (c.id === cardId) {
+              revealedCategory = c.categoryName || "";
+              revealedValue = c.value;
+              return { ...c, isRevealedToAll: true };
+            }
+            return c;
+          }),
         };
       }
       return p;
     });
 
-    if (playerId === room.currentTurnPlayerId) {
-      room.hasRevealedCardInTurn = true;
+    // If it was this player's turn, auto-complete their turn and pass to next eligible player!
+    if (room.status === "in_game" && room.currentTurnPlayerId === playerId) {
+      const actingPlayer = room.players.find((p) => p.id === playerId);
+      const actorTag = actingPlayer
+        ? `#${actingPlayer.playerNumber ?? "?"} ${actingPlayer.name}`
+        : "Гравець";
+
+      const turnResult = this.advanceTurn(room, playerId);
+
+      let skipNote = "";
+      if (turnResult.skippedPlayerNames.length > 0) {
+        skipNote = ` (у ${turnResult.skippedPlayerNames.join(", ")} все відкрито — пропущено)`;
+      }
+
+      if (turnResult.phaseChangedToVoting) {
+        room.lastActionMessage = `👁️ ${actorTag} відкрив «${revealedCategory}: ${revealedValue}». Усі гравці виступили в Раунді ${room.roundNumber || 1}! Починається голосування.${skipNote}`;
+      } else if (turnResult.nextPlayer) {
+        room.lastActionMessage = `👁️ ${actorTag} відкрив «${revealedCategory}: ${revealedValue}». Черга перейшла до #${turnResult.nextPlayer.playerNumber} ${turnResult.nextPlayer.name}!${skipNote}`;
+      }
     }
 
     await this.updateRoom(room);
@@ -409,31 +492,24 @@ export class RoomManager {
   async endTurn(code: string, playerId: string): Promise<GameRoom | null> {
     const cleanCode = code.trim().toUpperCase();
     const room = await this.getRoom(cleanCode);
-    if (!room || room.status !== "in_game") return null;
-
-    if (room.currentTurnPlayerId !== playerId) {
+    if (!room || room.status !== "in_game" || room.currentTurnPlayerId !== playerId) {
       return room;
     }
 
-    const alivePlayers = room.players
-      .filter((p) => !p.isEliminated)
-      .sort((a, b) => (a.playerNumber || 0) - (b.playerNumber || 0));
+    const currentP = room.players.find((p) => p.id === playerId);
+    const actorTag = currentP ? `#${currentP.playerNumber ?? "?"} ${currentP.name}` : "Гравець";
 
-    if (alivePlayers.length === 0) return room;
+    const turnResult = this.advanceTurn(room, playerId);
 
-    const currentIdx = alivePlayers.findIndex((p) => p.id === playerId);
-    const nextIdx = currentIdx + 1;
+    let skipNote = "";
+    if (turnResult.skippedPlayerNames.length > 0) {
+      skipNote = ` (у ${turnResult.skippedPlayerNames.join(", ")} все відкрито — пропущено)`;
+    }
 
-    if (nextIdx < alivePlayers.length) {
-      const nextPlayer = alivePlayers[nextIdx];
-      room.currentTurnPlayerId = nextPlayer.id;
-      room.hasRevealedCardInTurn = false;
-      room.lastActionMessage = `🎯 Черга перейшла до гравця #${nextPlayer.playerNumber} ${nextPlayer.name}! (Раунд ${room.roundNumber || 1})`;
-    } else {
-      room.turnPhase = "voting";
-      room.currentTurnPlayerId = undefined;
-      room.hasRevealedCardInTurn = false;
-      room.lastActionMessage = `⚖️ Усі гравці виступили в Раунді ${room.roundNumber || 1}! Відкривається загальне голосування за вигнання.`;
+    if (turnResult.phaseChangedToVoting) {
+      room.lastActionMessage = `🎯 ${actorTag} завершив хід. Усі гравці виступили в Раунді ${room.roundNumber || 1}! Відкривається голосування.${skipNote}`;
+    } else if (turnResult.nextPlayer) {
+      room.lastActionMessage = `🎯 ${actorTag} завершив хід. Черга перейшла до #${turnResult.nextPlayer.playerNumber} ${turnResult.nextPlayer.name}!${skipNote}`;
     }
 
     await this.updateRoom(room);
@@ -447,24 +523,19 @@ export class RoomManager {
 
     const currentId = room.currentTurnPlayerId;
     const currentP = room.players.find((p) => p.id === currentId);
+    const actorTag = currentP ? `#${currentP.playerNumber ?? "?"} ${currentP.name}` : "Гравця";
 
-    const alivePlayers = room.players
-      .filter((p) => !p.isEliminated)
-      .sort((a, b) => (a.playerNumber || 0) - (b.playerNumber || 0));
+    const turnResult = this.advanceTurn(room, currentId);
 
-    const currentIdx = alivePlayers.findIndex((p) => p.id === currentId);
-    const nextIdx = currentIdx + 1;
+    let skipNote = "";
+    if (turnResult.skippedPlayerNames.length > 0) {
+      skipNote = ` (у ${turnResult.skippedPlayerNames.join(", ")} все відкрито — пропущено)`;
+    }
 
-    if (nextIdx < alivePlayers.length) {
-      const nextPlayer = alivePlayers[nextIdx];
-      room.currentTurnPlayerId = nextPlayer.id;
-      room.hasRevealedCardInTurn = false;
-      room.lastActionMessage = `⏩ Хід гравця #${currentP?.playerNumber ?? "?"} ${currentP?.name} пропущено хостом. Черга перейшла до #${nextPlayer.playerNumber} ${nextPlayer.name}!`;
-    } else {
-      room.turnPhase = "voting";
-      room.currentTurnPlayerId = undefined;
-      room.hasRevealedCardInTurn = false;
-      room.lastActionMessage = `⚖️ Усі гравці виступили в Раунді ${room.roundNumber || 1}! Відкривається загальне голосування за вигнання.`;
+    if (turnResult.phaseChangedToVoting) {
+      room.lastActionMessage = `⏩ Хід ${actorTag} пропущено хостом. Усі гравці виступили в Раунді ${room.roundNumber || 1} — починається голосування!${skipNote}`;
+    } else if (turnResult.nextPlayer) {
+      room.lastActionMessage = `⏩ Хід ${actorTag} пропущено хостом. Черга перейшла до #${turnResult.nextPlayer.playerNumber} ${turnResult.nextPlayer.name}!${skipNote}`;
     }
 
     await this.updateRoom(room);
@@ -572,12 +643,16 @@ export class RoomManager {
         const nextRound = (room.roundNumber || 1) + 1;
         room.roundNumber = nextRound;
         room.turnPhase = "presenting";
-        const remainingAlive = room.players
-          .filter((p) => !p.isEliminated)
-          .sort((a, b) => (a.playerNumber || 0) - (b.playerNumber || 0));
-        const firstPlayerNextRound = remainingAlive[0];
-        room.currentTurnPlayerId = firstPlayerNextRound ? firstPlayerNextRound.id : undefined;
-        room.hasRevealedCardInTurn = false;
+        const turnRes = this.advanceTurn(room);
+        let skipNote = "";
+        if (turnRes.skippedPlayerNames.length > 0) {
+          skipNote = ` (у ${turnRes.skippedPlayerNames.join(", ")} всі карти відкриті — пропущено)`;
+        }
+        if (turnRes.phaseChangedToVoting) {
+          room.lastActionMessage = `⚖️ Раунд ${nextRound}: Усіх характеристик уже відкрито — одразу відкрито голосування!`;
+        } else if (turnRes.nextPlayer) {
+          room.lastActionMessage = `🎯 Початок Раунду ${nextRound}! Черга ходу: #${turnRes.nextPlayer.playerNumber} ${turnRes.nextPlayer.name}.${skipNote}`;
+        }
       } else if (topCandidates.length >= 2) {
         // TIE! Launch Rock-Paper-Scissors duel between tied candidates
         const p1 = room.players.find((p) => p.id === topCandidates[0]);
@@ -667,12 +742,16 @@ export class RoomManager {
         const nextRound = (room.roundNumber || 1) + 1;
         room.roundNumber = nextRound;
         room.turnPhase = "presenting";
-        const remainingAlive = room.players
-          .filter((p) => !p.isEliminated)
-          .sort((a, b) => (a.playerNumber || 0) - (b.playerNumber || 0));
-        const firstPlayerNextRound = remainingAlive[0];
-        room.currentTurnPlayerId = firstPlayerNextRound ? firstPlayerNextRound.id : undefined;
-        room.hasRevealedCardInTurn = false;
+        const turnRes = this.advanceTurn(room);
+        let skipNote = "";
+        if (turnRes.skippedPlayerNames.length > 0) {
+          skipNote = ` (у ${turnRes.skippedPlayerNames.join(", ")} всі карти відкриті — пропущено)`;
+        }
+        if (turnRes.phaseChangedToVoting) {
+          room.lastActionMessage = `⚖️ Раунд ${nextRound}: Усіх характеристик уже відкрито — перехід до голосування!`;
+        } else if (turnRes.nextPlayer) {
+          room.lastActionMessage = `🎯 Початок Раунду ${nextRound}! Черга ходу: #${turnRes.nextPlayer.playerNumber} ${turnRes.nextPlayer.name}.${skipNote}`;
+        }
       }
     }
 
@@ -968,6 +1047,22 @@ export class RoomManager {
     specialCard.isRevealedToAll = true;
     specialCard.isUsed = true;
     room.lastActionMessage = actionLog;
+
+    // If it was this player's turn, auto-complete their turn and pass to next eligible player!
+    if (room.status === "in_game" && room.currentTurnPlayerId === playerId) {
+      const turnResult = this.advanceTurn(room, playerId);
+
+      let skipNote = "";
+      if (turnResult.skippedPlayerNames.length > 0) {
+        skipNote = ` (у ${turnResult.skippedPlayerNames.join(", ")} все відкрито — пропущено)`;
+      }
+
+      if (turnResult.phaseChangedToVoting) {
+        room.lastActionMessage = `${actionLog} Усі гравці виступили в Раунді ${room.roundNumber || 1}! Починається голосування.${skipNote}`;
+      } else if (turnResult.nextPlayer) {
+        room.lastActionMessage = `${actionLog} Черга перейшла до #${turnResult.nextPlayer.playerNumber} ${turnResult.nextPlayer.name}!${skipNote}`;
+      }
+    }
 
     await this.updateRoom(room);
     return { room, peekedCard };
