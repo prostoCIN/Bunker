@@ -2,23 +2,78 @@
 
 import React from "react";
 import { GameRoom, Player } from "@/types/game";
+import { SkipForward, LogOut } from "lucide-react";
 
 interface PlayersTableProps {
   room: GameRoom;
   currentPlayer: Player;
+  onLeaveRoom?: () => void;
+  onSkipTurn?: () => void;
 }
 
-export function PlayersTable({ room, currentPlayer }: PlayersTableProps) {
+export function PlayersTable({
+  room,
+  currentPlayer,
+  onLeaveRoom,
+  onSkipTurn,
+}: PlayersTableProps) {
+  const alivePlayers = [...room.players]
+    .filter((p) => !p.isEliminated)
+    .sort((a, b) => (a.playerNumber ?? 0) - (b.playerNumber ?? 0));
+
+  const currentTurnIdx = alivePlayers.findIndex(
+    (p) => p.id === room.currentTurnPlayerId
+  );
+
+  // Find the index of the next player who has unrevealed cards
+  let nextTurnIdx = -1;
+  if (currentTurnIdx !== -1) {
+    for (let i = currentTurnIdx + 1; i < alivePlayers.length; i++) {
+      const p = alivePlayers[i];
+      if (p.cards && p.cards.some((c) => !c.isRevealedToAll)) {
+        nextTurnIdx = i;
+        break;
+      }
+    }
+  }
+
   return (
     <div className="w-full h-full flex flex-col bg-zinc-900/60 border border-zinc-800/80 rounded-3xl p-5 xl:p-6 shadow-xl backdrop-blur-md overflow-hidden min-h-0">
       {/* Table Header */}
-      <div className="flex items-center justify-between pb-4 mb-4 border-b border-zinc-800/60 shrink-0">
-        <h2 className="text-base font-bold text-white tracking-wide">
-          Стіл бункера
-        </h2>
-        <span className="text-[11px] font-mono tracking-wider text-zinc-400 bg-zinc-800/60 px-2.5 py-0.5 rounded-full">
-          {room.players.length} гравців
-        </span>
+      <div className="flex items-center justify-between pb-4 mb-4 border-b border-zinc-800/60 shrink-0 gap-2">
+        <div className="flex items-center gap-2 flex-wrap min-w-0">
+          <h2 className="text-base font-bold text-white tracking-wide">
+            Стіл бункера
+          </h2>
+          <span className="text-[11px] font-mono tracking-wider text-zinc-400 bg-zinc-800/60 px-2 py-0.5 rounded-full shrink-0">
+            Раунд #{room.roundNumber || 1}
+          </span>
+          {room.turnPhase === "presenting" ? (
+            <span className="text-[10px] font-mono font-semibold text-amber-300 bg-amber-950/40 border border-amber-500/30 px-2 py-0.5 rounded-full shrink-0">
+              Черга виступів
+            </span>
+          ) : (
+            <span className="text-[10px] font-mono font-semibold text-purple-300 bg-purple-950/40 border border-purple-500/30 px-2 py-0.5 rounded-full shrink-0">
+              Голосування
+            </span>
+          )}
+        </div>
+
+        <div className="flex items-center gap-2 shrink-0">
+          <span className="text-[11px] font-mono text-zinc-500 hidden sm:inline">
+            {alivePlayers.length} у грі
+          </span>
+          {onLeaveRoom && (
+            <button
+              onClick={onLeaveRoom}
+              title="Покинути гру"
+              className="px-2 py-1 text-zinc-400 hover:text-white rounded-lg hover:bg-zinc-800/80 border border-zinc-800/80 hover:border-zinc-700 transition-colors cursor-pointer flex items-center gap-1 text-xs"
+            >
+              <LogOut className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline text-[11px]">Вийти</span>
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Players list */}
@@ -35,6 +90,27 @@ export function PlayersTable({ room, currentPlayer }: PlayersTableProps) {
               room.currentTurnPlayerId === player.id &&
               room.turnPhase === "presenting" &&
               !player.isEliminated;
+
+            const playerAliveIdx = alivePlayers.findIndex((p) => p.id === player.id);
+            const hasAlreadyPresented =
+              room.turnPhase === "presenting" &&
+              !player.isEliminated &&
+              currentTurnIdx !== -1 &&
+              playerAliveIdx !== -1 &&
+              playerAliveIdx < currentTurnIdx;
+
+            const isNextTurn =
+              room.turnPhase === "presenting" &&
+              !player.isEliminated &&
+              playerAliveIdx === nextTurnIdx;
+
+            const isWaitingTurn =
+              room.turnPhase === "presenting" &&
+              !player.isEliminated &&
+              !isCurrentTurn &&
+              !hasAlreadyPresented &&
+              !isNextTurn;
+
             const allRevealed =
               Boolean(player.cards &&
               player.cards.length > 0 &&
@@ -60,11 +136,44 @@ export function PlayersTable({ room, currentPlayer }: PlayersTableProps) {
                     <span className="font-bold text-base text-white">
                       {player.name}
                     </span>
+
+                  {/* Turn progression badge in table */}
                   {isCurrentTurn && (
-                    <span className="text-[10px] font-bold text-amber-300 bg-amber-950/90 border border-amber-500/60 px-2 py-0.5 rounded-md animate-pulse">
-                      🎯 Зараз ходить
+                    <div className="flex items-center gap-1">
+                      <span className="text-[10px] font-bold text-amber-300 bg-amber-950/90 border border-amber-500/60 px-2 py-0.5 rounded-md animate-pulse">
+                        🎯 Зараз ходить
+                      </span>
+                      {currentPlayer.isHost && onSkipTurn && (
+                        <button
+                          onClick={onSkipTurn}
+                          title="Хост: передати хід наступному гравцю"
+                          className="text-[10px] text-amber-400 hover:text-white bg-amber-950/60 hover:bg-amber-900/80 border border-amber-500/40 px-1.5 py-0.5 rounded transition cursor-pointer flex items-center gap-0.5"
+                        >
+                          <SkipForward className="w-2.5 h-2.5" />
+                          <span>Пропустити</span>
+                        </button>
+                      )}
+                    </div>
+                  )}
+
+                  {hasAlreadyPresented && (
+                    <span className="text-[10px] font-medium text-emerald-400/90 bg-emerald-950/40 border border-emerald-500/30 px-2 py-0.5 rounded-md">
+                      ✓ Виступив
                     </span>
                   )}
+
+                  {isNextTurn && !allRevealed && (
+                    <span className="text-[10px] font-medium text-amber-400/80 bg-zinc-900 border border-amber-500/20 px-2 py-0.5 rounded-md">
+                      ⏳ Наступний
+                    </span>
+                  )}
+
+                  {isWaitingTurn && !allRevealed && (
+                    <span className="text-[10px] font-medium text-zinc-500 bg-zinc-900/80 border border-zinc-800 px-2 py-0.5 rounded-md">
+                      В черзі
+                    </span>
+                  )}
+
                   {allRevealed && !player.isEliminated && (
                     <span className="text-[10px] font-medium text-zinc-400 bg-zinc-800/70 border border-zinc-700/60 px-2 py-0.5 rounded-md">
                       ✓ Все відкрито

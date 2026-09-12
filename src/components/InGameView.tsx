@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { GameRoom, Player, RpsChoice } from "@/types/game";
 import { PlayerCharacterCard } from "@/data/characterData";
 import { CatastropheColumn } from "./CatastropheColumn";
@@ -63,6 +63,15 @@ export function InGameView({
   );
   const isMyTurn = currentPlayer.id === room.currentTurnPlayerId;
   const isVotingPhase = room.turnPhase === "voting";
+
+  // Auto-switch mobile tab when entering or leaving voting phase
+  useEffect(() => {
+    if (isVotingPhase) {
+      setActiveTab("kick");
+    } else if (activeTab === "kick") {
+      setActiveTab("table");
+    }
+  }, [isVotingPhase]);
 
   const cards = currentPlayer.cards || [];
   const revealedCount = cards.filter((c) => c.isRevealedToAll).length;
@@ -179,10 +188,14 @@ export function InGameView({
 
   return (
     <div className="w-full flex-1 flex flex-col h-full min-h-0 overflow-hidden">
-      {/* ================= 1. MOBILE VIEW (<md, <768px): 4 TABS ================= */}
+      {/* ================= 1. MOBILE VIEW (<md, <768px): 3 OR 4 TABS ================= */}
       <div className="md:hidden flex flex-col flex-1 min-h-0 overflow-hidden">
-        {/* Top 4-Segment Switcher */}
-        <div className="w-full grid grid-cols-4 bg-zinc-950/80 border border-zinc-800/60 p-1 rounded-2xl mb-2.5 shadow-inner gap-1 text-center shrink-0">
+        {/* Top Switcher: 3 tabs when presenting, 4 tabs when voting */}
+        <div
+          className={`w-full grid ${
+            isVotingPhase ? "grid-cols-4" : "grid-cols-3"
+          } bg-zinc-950/80 border border-zinc-800/60 p-1 rounded-2xl mb-2.5 shadow-inner gap-1 text-center shrink-0`}
+        >
           <button
             onClick={() => setActiveTab("catastrophe")}
             className={`py-2 rounded-xl text-xs font-medium flex items-center justify-center gap-1 transition-all cursor-pointer ${
@@ -219,17 +232,19 @@ export function InGameView({
             <span className="truncate">Рука</span>
           </button>
 
-          <button
-            onClick={() => setActiveTab("kick")}
-            className={`py-2 rounded-xl text-xs font-medium flex items-center justify-center gap-1 transition-all cursor-pointer ${
-              activeTab === "kick"
-                ? "bg-zinc-800 text-white font-bold shadow-sm"
-                : "text-zinc-400 hover:text-white"
-            }`}
-          >
-            <UserX className="w-3.5 h-3.5" />
-            <span className="truncate">Вигнати</span>
-          </button>
+          {isVotingPhase && (
+            <button
+              onClick={() => setActiveTab("kick")}
+              className={`py-2 rounded-xl text-xs font-medium flex items-center justify-center gap-1 transition-all cursor-pointer ${
+                activeTab === "kick"
+                  ? "bg-zinc-800 text-white font-bold shadow-sm"
+                  : "text-zinc-400 hover:text-white"
+              }`}
+            >
+              <UserX className="w-3.5 h-3.5" />
+              <span className="truncate">Вигнати</span>
+            </button>
+          )}
         </div>
 
         {/* Tab Content Container */}
@@ -238,10 +253,15 @@ export function InGameView({
             <CatastropheColumn catastrophe={room.catastrophe} />
           )}
           {activeTab === "table" && (
-            <PlayersTable room={room} currentPlayer={currentPlayer} />
+            <PlayersTable
+              room={room}
+              currentPlayer={currentPlayer}
+              onLeaveRoom={() => setIsLeaveModalOpen(true)}
+              onSkipTurn={onSkipTurn}
+            />
           )}
           {activeTab === "hand" && renderHandContent()}
-          {activeTab === "kick" && (
+          {isVotingPhase && activeTab === "kick" && (
             <KickColumn
               room={room}
               currentPlayer={currentPlayer}
@@ -254,50 +274,76 @@ export function InGameView({
         </div>
       </div>
 
-      {/* ================= 2. TABLET VIEW (md to <lg, 768px-1023px): 2x2 GRID ================= */}
-      <div className="hidden md:grid lg:hidden md:grid-cols-2 md:grid-rows-2 md:gap-3 flex-1 w-full min-h-0 h-full overflow-hidden">
+      {/* ================= 2. TABLET VIEW (md to <lg, 768px-1023px) ================= */}
+      <div
+        className={`hidden md:grid lg:hidden gap-3 flex-1 w-full min-h-0 h-full overflow-hidden ${
+          isVotingPhase ? "md:grid-cols-2 md:grid-rows-2" : "md:grid-cols-3"
+        }`}
+      >
         <div className="h-full min-h-0 flex flex-col overflow-hidden">
           <CatastropheColumn catastrophe={room.catastrophe} />
         </div>
         <div className="h-full min-h-0 flex flex-col overflow-hidden">
-          <PlayersTable room={room} currentPlayer={currentPlayer} />
+          <PlayersTable
+            room={room}
+            currentPlayer={currentPlayer}
+            onLeaveRoom={() => setIsLeaveModalOpen(true)}
+            onSkipTurn={onSkipTurn}
+          />
         </div>
         <div className="h-full min-h-0 flex flex-col overflow-hidden">
           {renderHandContent()}
         </div>
-        <div className="h-full min-h-0 flex flex-col overflow-hidden">
-          <KickColumn
-            room={room}
-            currentPlayer={currentPlayer}
-            onKickClick={() => setIsKickModalOpen(true)}
-            onLeaveRoom={() => setIsLeaveModalOpen(true)}
-            onSkipTurn={onSkipTurn}
-            onEndTurn={onEndTurn}
-          />
-        </div>
+        {isVotingPhase && (
+          <div className="h-full min-h-0 flex flex-col overflow-hidden">
+            <KickColumn
+              room={room}
+              currentPlayer={currentPlayer}
+              onKickClick={() => setIsKickModalOpen(true)}
+              onLeaveRoom={() => setIsLeaveModalOpen(true)}
+              onSkipTurn={onSkipTurn}
+              onEndTurn={onEndTurn}
+            />
+          </div>
+        )}
       </div>
 
-      {/* ================= 3. LAPTOP & DESKTOP VIEW (>=lg, 1024px+): 4 COLUMNS 100% WIDTH ================= */}
+      {/* ================= 3. LAPTOP & DESKTOP VIEW (>=lg, 1024px+): 3 OR 4 COLUMNS ================= */}
       <div className="hidden lg:grid lg:grid-cols-12 lg:gap-4 flex-1 w-full min-h-0 h-full overflow-hidden">
         <div className="lg:col-span-3 flex flex-col h-full min-h-0 overflow-hidden">
           <CatastropheColumn catastrophe={room.catastrophe} />
         </div>
-        <div className="lg:col-span-4 flex flex-col h-full min-h-0 overflow-hidden">
-          <PlayersTable room={room} currentPlayer={currentPlayer} />
-        </div>
-        <div className="lg:col-span-3 flex flex-col h-full min-h-0 overflow-hidden">
-          {renderHandContent()}
-        </div>
-        <div className="lg:col-span-2 flex flex-col h-full min-h-0 overflow-hidden">
-          <KickColumn
+        <div
+          className={`${
+            isVotingPhase ? "lg:col-span-4" : "lg:col-span-5"
+          } flex flex-col h-full min-h-0 overflow-hidden transition-all duration-300`}
+        >
+          <PlayersTable
             room={room}
             currentPlayer={currentPlayer}
-            onKickClick={() => setIsKickModalOpen(true)}
             onLeaveRoom={() => setIsLeaveModalOpen(true)}
             onSkipTurn={onSkipTurn}
-            onEndTurn={onEndTurn}
           />
         </div>
+        <div
+          className={`${
+            isVotingPhase ? "lg:col-span-3" : "lg:col-span-4"
+          } flex flex-col h-full min-h-0 overflow-hidden transition-all duration-300`}
+        >
+          {renderHandContent()}
+        </div>
+        {isVotingPhase && (
+          <div className="lg:col-span-2 flex flex-col h-full min-h-0 overflow-hidden animate-in fade-in duration-300">
+            <KickColumn
+              room={room}
+              currentPlayer={currentPlayer}
+              onKickClick={() => setIsKickModalOpen(true)}
+              onLeaveRoom={() => setIsLeaveModalOpen(true)}
+              onSkipTurn={onSkipTurn}
+              onEndTurn={onEndTurn}
+            />
+          </div>
+        )}
       </div>
 
       {/* Leave Game Confirmation Modal (Centered on entire screen) */}
