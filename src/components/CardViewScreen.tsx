@@ -2,16 +2,7 @@
 
 import React, { useState } from "react";
 import { PlayerCharacterCard } from "@/data/characterData";
-import { 
-  ArrowLeft, 
-  Eye, 
-  EyeOff, 
-  Users, 
-  ShieldCheck, 
-  Lock, 
-  FileText, 
-  Check 
-} from "lucide-react";
+import { ArrowLeft, Eye, EyeOff, Users, Check } from "lucide-react";
 
 interface CardViewScreenProps {
   card: PlayerCharacterCard;
@@ -36,110 +27,73 @@ export function CardViewScreen({
   };
 
   return (
-    <div className="w-full h-full flex flex-col justify-between items-center py-2 overflow-y-auto">
-      {/* Top Bar */}
-      <div className="w-full flex items-center justify-between mb-4">
+    <div className="w-full h-full flex flex-col justify-between items-center py-2 px-1 overflow-y-auto">
+      {/* Top Bar: Minimal Back Button */}
+      <div className="w-full flex items-center justify-start mb-3">
         <button
           onClick={onBack}
-          className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-zinc-900 border border-zinc-800 text-zinc-300 hover:text-white transition-colors text-xs font-semibold cursor-pointer active:scale-95"
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 text-zinc-300 hover:text-white transition-colors text-xs font-semibold cursor-pointer active:scale-95"
         >
           <ArrowLeft className="w-4 h-4" />
-          <span>Назад до списку</span>
+          <span>Назад</span>
         </button>
-
-        <span className="text-xs font-mono uppercase tracking-wider text-zinc-500">
-          Картка #{card.id.replace("card_", "")}
-        </span>
       </div>
 
-      {/* Center: The Card (Front or Back) */}
-      <div className="w-full my-auto flex flex-col items-center perspective-[1000px]">
+      {/* Center: The Minimalist Card */}
+      <div className="w-full my-auto flex flex-col items-center">
         <div
-          className={`w-full max-w-xs aspect-[3/4.2] rounded-3xl p-6 transition-all duration-500 shadow-2xl flex flex-col justify-between relative overflow-hidden border-2 select-none ${
+          onClick={() => setIsFlipped(!isFlipped)}
+          className={`w-full max-w-xs sm:max-w-sm aspect-[3/4.2] rounded-3xl p-6 sm:p-7 transition-all duration-300 shadow-2xl flex flex-col justify-between relative border cursor-pointer select-none ${
             isFlipped
-              ? "bg-gradient-to-b from-zinc-900 via-zinc-900 to-zinc-950 border-amber-500/50 shadow-amber-950/20"
-              : "bg-gradient-to-b from-zinc-950 via-zinc-900 to-zinc-950 border-zinc-700 shadow-black"
+              ? "bg-zinc-950 border-zinc-700 shadow-black"
+              : "bg-zinc-900 border-zinc-800 shadow-black"
           }`}
         >
-          {/* ================= РУБАШКА КАРТКИ ================= */}
+          {/* ================= СОРОЧКА КАРТКИ (РУБАШКА) ================= */}
           {!isFlipped ? (
-            <div className="h-full flex flex-col justify-between items-center text-center relative z-10">
-              {/* Card Back Corner Accents */}
-              <div className="w-full flex items-center justify-between text-zinc-600 font-mono text-[10px] tracking-widest uppercase">
-                <span>[ СХОВИЩЕ ]</span>
-                <span>[ СЕКРЕТНО ]</span>
-              </div>
+            <div className="h-full flex flex-col justify-between items-center text-center">
+              {/* Тип картки зверху */}
+              <span className="text-xs font-mono uppercase tracking-widest text-zinc-500">
+                {card.categoryName}
+              </span>
 
-              {/* Center Emblem of Card Back */}
-              <div className="flex flex-col items-center my-auto">
-                <div className="w-24 h-24 rounded-full bg-zinc-900 border-2 border-dashed border-zinc-700 flex items-center justify-center text-5xl mb-4 shadow-inner">
+              {/* Центральний мінімалістичний символ і назва */}
+              <div className="my-auto flex flex-col items-center">
+                <span className="text-6xl sm:text-7xl mb-4 block filter grayscale opacity-80">
                   {card.icon}
-                </div>
-
-                <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-red-950/50 border border-red-800/60 text-red-400 text-xs font-black tracking-widest uppercase mb-2">
-                  <Lock className="w-3.5 h-3.5" />
-                  <span>ЦІЛКОМ ТАЄМНО</span>
-                </div>
-
-                <h3 className="text-lg font-bold text-white tracking-wide">
+                </span>
+                <h2 className="text-xl sm:text-2xl font-bold text-zinc-200 tracking-wide">
                   {card.categoryName}
-                </h3>
-                <p className="text-[11px] text-zinc-500 mt-1 max-w-[200px]">
-                  Особова справа уцілілого. Інформація заблокована.
-                </p>
-              </div>
-
-              {/* Card Back Bottom watermark */}
-              <div className="w-full text-center border-t border-zinc-800 pt-2 text-[10px] font-mono text-zinc-600 uppercase tracking-wider">
-                ПРОТОКОЛ БУНКЕР // КАРТКА ПАРАМЕТРА
-              </div>
-            </div>
-          ) : (
-            /* ================= ЛИЦЬОВА СТОРОНА КАРТКИ ================= */
-            <div className="h-full flex flex-col justify-between relative z-10 animate-in fade-in duration-300">
-              {/* Card Front Header */}
-              <div>
-                <div className="flex items-center justify-between mb-3">
-                  <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-400 text-xs font-semibold">
-                    <span className="text-base">{card.icon}</span>
-                    <span>{card.categoryName}</span>
-                  </div>
-
-                  {card.isRevealedToAll ? (
-                    <span className="flex items-center gap-1 text-[10px] font-bold text-emerald-400 bg-emerald-950/60 border border-emerald-500/40 px-2 py-0.5 rounded-full">
-                      <Users className="w-3 h-3" />
-                      ВІДКРИТО ВСІМ
-                    </span>
-                  ) : (
-                    <span className="flex items-center gap-1 text-[10px] font-bold text-amber-400 bg-amber-950/40 border border-amber-500/30 px-2 py-0.5 rounded-full">
-                      <Eye className="w-3 h-3" />
-                      БАЧИТЕ ЛИШЕ ВИ
-                    </span>
-                  )}
-                </div>
-
-                {/* Main Value */}
-                <h2 className="text-2xl font-black text-white tracking-tight leading-snug mt-4">
-                  {card.value}
                 </h2>
               </div>
 
-              {/* Description Body */}
-              <div className="my-auto bg-zinc-950/70 border border-zinc-800 rounded-2xl p-4">
-                <span className="text-zinc-500 block text-[10px] uppercase font-mono tracking-wider mb-1">
-                  Характеристика:
-                </span>
-                <p className="text-sm font-medium text-zinc-200 leading-relaxed">
-                  {card.description}
-                </p>
+              {/* Низ сорочки */}
+              <div className="w-8 h-1 bg-zinc-800 rounded-full" />
+            </div>
+          ) : (
+            /* ================= ЛИЦЬОВА СТОРОНА (ВМІСТ) ================= */
+            <div className="h-full flex flex-col justify-between text-left animate-in fade-in duration-200">
+              {/* Тип картки зверху */}
+              <div className="flex items-center gap-2 text-xs font-mono uppercase tracking-wider text-emerald-400">
+                <span className="text-base">{card.icon}</span>
+                <span>{card.categoryName}</span>
               </div>
 
-              {/* Card Front Footer */}
-              <div className="border-t border-zinc-800 pt-2 text-center text-[10px] font-mono text-zinc-500 uppercase">
-                {card.isRevealedToAll
-                  ? "✓ Ця інформація відома всім у бункері"
-                  : "🔒 Тримайте в таємниці або відкрийте іншим"}
+              {/* Вміст картки (Значення + Опис) */}
+              <div className="my-auto space-y-3">
+                <h2 className="text-2xl sm:text-3xl font-black text-white leading-tight">
+                  {card.value}
+                </h2>
+
+                {card.description && (
+                  <p className="text-sm sm:text-base text-zinc-300 leading-relaxed font-normal">
+                    {card.description}
+                  </p>
+                )}
               </div>
+
+              {/* Чистий низ */}
+              <div className="w-8 h-1 bg-zinc-800 rounded-full" />
             </div>
           )}
         </div>
@@ -148,27 +102,27 @@ export function CardViewScreen({
         {justRevealed && (
           <div className="mt-3 flex items-center gap-1.5 text-xs text-emerald-400 font-bold bg-emerald-950/80 border border-emerald-500 px-3 py-1.5 rounded-xl animate-in fade-in slide-in-from-bottom-2">
             <Check className="w-4 h-4" />
-            <span>Картку відкрито для всіх гравців у кімнаті!</span>
+            <span>Картку відкрито для всіх гравців!</span>
           </div>
         )}
       </div>
 
-      {/* Bottom: EXACTLY 2 BUTTONS as requested */}
-      <div className="w-full max-w-xs flex flex-col gap-3 mt-4">
+      {/* Bottom: EXACTLY 2 MINIMALIST BUTTONS */}
+      <div className="w-full max-w-xs sm:max-w-sm flex flex-col gap-2.5 mt-4">
         {/* Кнопка 1: Показати / Сховати (для себе) */}
         <button
           onClick={() => setIsFlipped(!isFlipped)}
-          className="w-full py-3.5 px-4 rounded-2xl font-bold text-sm uppercase tracking-wider flex items-center justify-center gap-2 bg-zinc-900 hover:bg-zinc-800 text-zinc-100 border border-zinc-700 active:scale-98 transition-all cursor-pointer shadow-md"
+          className="w-full py-3 px-4 rounded-xl font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-2 bg-zinc-900 hover:bg-zinc-800 text-zinc-200 border border-zinc-800 active:scale-98 transition-all cursor-pointer"
         >
           {isFlipped ? (
             <>
               <EyeOff className="w-4 h-4 text-zinc-400" />
-              <span>Показати сорочку (сховати)</span>
+              <span>Показати сорочку</span>
             </>
           ) : (
             <>
-              <Eye className="w-4 h-4 text-amber-400" />
-              <span>Показати</span>
+              <Eye className="w-4 h-4 text-zinc-300" />
+              <span>Показати вміст</span>
             </>
           )}
         </button>
@@ -177,16 +131,16 @@ export function CardViewScreen({
         <button
           onClick={handleRevealToAll}
           disabled={card.isRevealedToAll}
-          className={`w-full py-4 px-4 rounded-2xl font-black text-sm uppercase tracking-wider flex items-center justify-center gap-2 transition-all active:scale-98 cursor-pointer shadow-xl ${
+          className={`w-full py-3 px-4 rounded-xl font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-2 transition-all active:scale-98 cursor-pointer ${
             card.isRevealedToAll
-              ? "bg-zinc-800/80 border border-zinc-700 text-zinc-500 cursor-not-allowed"
-              : "bg-gradient-to-r from-emerald-600 to-green-600 hover:from-emerald-500 hover:to-green-500 text-white border-2 border-emerald-400/80 shadow-emerald-950/40"
+              ? "bg-zinc-900 border border-zinc-800 text-zinc-500 cursor-not-allowed"
+              : "bg-emerald-600 hover:bg-emerald-500 text-white shadow-lg shadow-emerald-950/40"
           }`}
         >
           {card.isRevealedToAll ? (
             <>
               <Check className="w-4 h-4 text-emerald-400" />
-              <span>Вже відкрито всім гравцям</span>
+              <span>Відкрито всім</span>
             </>
           ) : (
             <>
