@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useRef } from "react";
+import React, { useState } from "react";
 import { GameRoom, Player } from "@/types/game";
 import { PlayerCharacterCard } from "@/data/characterData";
 import { CatastropheColumn } from "./CatastropheColumn";
@@ -14,7 +14,6 @@ import {
   ChevronRight, 
   Lock, 
   Flame, 
-  ArrowRightLeft,
   LogOut,
   UserX,
   Skull
@@ -30,7 +29,6 @@ interface InGameViewProps {
 }
 
 type TabType = "catastrophe" | "table" | "hand" | "kick";
-const TABS_ORDER: TabType[] = ["catastrophe", "table", "hand", "kick"];
 
 export function InGameView({
   room,
@@ -44,35 +42,6 @@ export function InGameView({
   const [activeTab, setActiveTab] = useState<TabType>("hand");
   const [selectedCard, setSelectedCard] = useState<PlayerCharacterCard | null>(null);
   const [isKickModalOpen, setIsKickModalOpen] = useState(false);
-
-  // Touch swipe support for mobile
-  const touchStartX = useRef<number | null>(null);
-  const touchEndX = useRef<number | null>(null);
-  const minSwipeDistance = 50;
-
-  const onTouchStart = (e: React.TouchEvent) => {
-    touchEndX.current = null;
-    touchStartX.current = e.targetTouches[0].clientX;
-  };
-
-  const onTouchMove = (e: React.TouchEvent) => {
-    touchEndX.current = e.targetTouches[0].clientX;
-  };
-
-  const onTouchEnd = () => {
-    if (!touchStartX.current || !touchEndX.current) return;
-    const distance = touchStartX.current - touchEndX.current;
-    const isLeftSwipe = distance > minSwipeDistance;
-    const isRightSwipe = distance < -minSwipeDistance;
-
-    const currentIndex = TABS_ORDER.indexOf(activeTab);
-
-    if (isLeftSwipe && currentIndex < TABS_ORDER.length - 1) {
-      setActiveTab(TABS_ORDER[currentIndex + 1]);
-    } else if (isRightSwipe && currentIndex > 0) {
-      setActiveTab(TABS_ORDER[currentIndex - 1]);
-    }
-  };
 
   const cards = currentPlayer.cards || [];
   const revealedCount = cards.filter((c) => c.isRevealedToAll).length;
@@ -235,19 +204,8 @@ export function InGameView({
           </button>
         </div>
 
-        {/* Swipe hint */}
-        <div className="flex items-center justify-center gap-1 text-[11px] text-zinc-500 font-mono mb-2">
-          <ArrowRightLeft className="w-3 h-3" />
-          <span>Свайпайте для перемикання між 4 розділами</span>
-        </div>
-
-        {/* Touch Container */}
-        <div
-          onTouchStart={onTouchStart}
-          onTouchMove={onTouchMove}
-          onTouchEnd={onTouchEnd}
-          className="flex-1 flex flex-col"
-        >
+        {/* Tab Content Container */}
+        <div className="flex-1 flex flex-col">
           {activeTab === "catastrophe" && (
             <CatastropheColumn catastrophe={room.catastrophe} />
           )}
