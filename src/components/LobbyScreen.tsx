@@ -140,7 +140,7 @@ export function LobbyScreen({
                 .map((player) => (
                   <div
                     key={player.id}
-                    className={`flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs border transition-colors duration-150 ${
+                    className={`flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs border transition-all duration-150 hover:scale-[0.97] active:scale-[0.94] cursor-default ${
                       player.isReady
                         ? "bg-emerald-950/30 border-emerald-500/30 hover:border-emerald-500/60 text-emerald-300 font-medium"
                         : "bg-zinc-950/40 border-zinc-800/50 hover:border-zinc-700/80 text-zinc-400"
@@ -166,7 +166,7 @@ export function LobbyScreen({
       <div className="w-full space-y-3 pt-2">
         <button
           onClick={onToggleReady}
-          className={`w-full py-4 rounded-2xl font-bold text-base flex items-center justify-center gap-2.5 transition-all cursor-pointer shadow-xl hover:-translate-y-0.5 active:translate-y-0.5 active:scale-98 ${
+          className={`w-full py-4 rounded-2xl font-bold text-base flex items-center justify-center gap-2.5 transition-all cursor-pointer shadow-xl hover:scale-[0.985] active:scale-[0.95] ${
             currentPlayer.isReady
               ? "bg-emerald-600 hover:bg-emerald-500 hover:shadow-emerald-950/60 text-white shadow-emerald-950/40"
               : "bg-zinc-800 hover:bg-zinc-700 hover:shadow-black/40 text-white"
@@ -189,7 +189,7 @@ export function LobbyScreen({
               disabled={readyCount < totalCount}
               className={`w-full py-4 rounded-2xl font-bold text-sm uppercase tracking-wider transition-all shadow-xl flex items-center justify-center gap-2 ${
                 readyCount === totalCount
-                  ? "bg-white hover:bg-zinc-200 hover:-translate-y-0.5 hover:shadow-2xl hover:shadow-white/10 text-zinc-950 shadow-white/10 cursor-pointer active:translate-y-0.5 active:scale-98"
+                  ? "bg-white hover:bg-zinc-200 hover:scale-[0.985] active:scale-[0.95] text-zinc-950 shadow-white/10 cursor-pointer"
                   : "bg-zinc-900 border border-zinc-800 text-zinc-600 cursor-not-allowed"
               }`}
             >
@@ -233,14 +233,14 @@ export function LobbyScreen({
                   setShowLeaveConfirm(false);
                   onLeaveRoom();
                 }}
-                className="w-full py-3 bg-red-600 hover:bg-red-500 hover:-translate-y-0.5 text-white font-bold text-xs uppercase tracking-wider rounded-xl transition-all active:translate-y-0.5 active:scale-98 cursor-pointer shadow-lg shadow-red-950/40"
+                className="w-full py-3 bg-red-600 hover:bg-red-500 text-white font-bold text-xs uppercase tracking-wider rounded-xl transition-all hover:scale-[0.985] active:scale-[0.95] cursor-pointer shadow-lg shadow-red-950/40"
               >
                 Так, вийти
               </button>
 
               <button
                 onClick={() => setShowLeaveConfirm(false)}
-                className="w-full py-2.5 bg-zinc-950 hover:bg-zinc-800 border border-zinc-800 text-zinc-400 hover:text-white font-medium text-xs rounded-xl transition-all cursor-pointer active:scale-95"
+                className="w-full py-2.5 bg-zinc-950 hover:bg-zinc-800 border border-zinc-800 text-zinc-400 hover:text-white font-medium text-xs rounded-xl transition-all hover:scale-[0.985] active:scale-[0.95] cursor-pointer"
               >
                 Скасувати
               </button>

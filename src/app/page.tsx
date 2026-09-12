@@ -447,7 +447,7 @@ function GameApp() {
         <button
           onClick={handleCreateLobby}
           disabled={isLoading}
-          className="w-full py-4 px-6 bg-white hover:bg-zinc-200 disabled:opacity-50 text-zinc-950 font-bold text-sm uppercase tracking-wider rounded-2xl flex items-center justify-center gap-2 shadow-lg hover:shadow-2xl hover:shadow-white/10 hover:-translate-y-0.5 active:translate-y-0.5 active:scale-98 transition-all cursor-pointer"
+          className="w-full py-4 px-6 bg-white hover:bg-zinc-200 disabled:opacity-50 text-zinc-950 font-bold text-sm uppercase tracking-wider rounded-2xl flex items-center justify-center gap-2 shadow-lg hover:shadow-2xl hover:shadow-white/10 hover:scale-[0.985] active:scale-[0.95] transition-all cursor-pointer"
         >
           {isLoading ? (
             <Loader2 className="w-5 h-5 animate-spin" />
@@ -466,7 +466,7 @@ function GameApp() {
             setIsJoinModalOpen(true);
           }}
           disabled={isLoading}
-          className="w-full py-4 px-6 bg-zinc-900 hover:bg-zinc-800 hover:border-zinc-700 hover:shadow-xl hover:shadow-black/50 disabled:opacity-50 border border-zinc-800 text-white font-semibold text-sm uppercase tracking-wider rounded-2xl flex items-center justify-center gap-2 hover:-translate-y-0.5 active:translate-y-0.5 active:scale-98 transition-all cursor-pointer"
+          className="w-full py-4 px-6 bg-zinc-900 hover:bg-zinc-800 hover:border-zinc-700 hover:shadow-xl hover:shadow-black/50 disabled:opacity-50 border border-zinc-800 text-white font-semibold text-sm uppercase tracking-wider rounded-2xl flex items-center justify-center gap-2 hover:scale-[0.985] active:scale-[0.95] transition-all cursor-pointer"
         >
           <LogIn className="w-5 h-5 text-zinc-400" />
           <span>Увійти за кодом</span>

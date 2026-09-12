@@ -65,7 +65,7 @@ export function PlayersTable({
             return (
               <div
                 key={player.id}
-                className={`p-4 sm:p-5 rounded-2xl border transition-colors duration-150 ease-out ${
+                className={`p-4 sm:p-5 rounded-2xl border transition-all duration-150 ease-out hover:scale-[0.99] active:scale-[0.97] ${
                   player.isEliminated
                     ? "opacity-50 bg-zinc-950/20 border-zinc-800/30"
                     : isCurrentTurn
@@ -106,7 +106,7 @@ export function PlayersTable({
                     {revealedCards.map((card) => (
                       <div
                         key={card.id}
-                        className="bg-zinc-900/50 border border-zinc-800/50 p-2.5 rounded-xl flex items-start gap-2.5 transition-colors duration-150 hover:border-zinc-700 hover:bg-zinc-900/90"
+                        className="bg-zinc-900/50 border border-zinc-800/50 p-2.5 rounded-xl flex items-start gap-2.5 transition-all duration-150 hover:scale-[0.98] active:scale-[0.95] hover:border-zinc-700 hover:bg-zinc-900/90 cursor-default"
                       >
                         <span className="text-base shrink-0 mt-0.5">{card.icon}</span>
                         <div className="flex-1 min-w-0">

@@ -121,20 +121,16 @@ export function CardViewScreen({
         )}
       </div>
 
-      {/* Center: The Minimalist Card */}
-      <div className="w-full my-auto flex flex-col items-center">
+      {/* Center: The Minimalist 3D Card */}
+      <div className="w-full my-auto flex flex-col items-center perspective-1000">
         <div
           onClick={() => setIsFlipped(!isFlipped)}
-          className={`w-full max-w-xs sm:max-w-sm aspect-[3/4.2] rounded-3xl p-6 sm:p-7 transition-colors duration-200 shadow-2xl flex flex-col justify-between relative border cursor-pointer select-none active:scale-[0.99] ${
-            isFlipped
-              ? isSpecial
-                ? "bg-zinc-950 border-amber-500/60 shadow-amber-950/20 hover:border-amber-400"
-                : "bg-zinc-950 border-zinc-700 shadow-black hover:border-zinc-500"
-              : "bg-zinc-900 border-zinc-800 shadow-black hover:border-zinc-700"
+          className={`w-full max-w-xs sm:max-w-sm aspect-[3/4.2] relative cursor-pointer select-none transform-style-3d transition-all duration-500 ease-out hover:scale-[0.985] active:scale-[0.95] ${
+            isFlipped ? "rotate-y-180" : ""
           }`}
         >
           {/* ================= СОРОЧКА КАРТКИ (РУБАШКА) ================= */}
-          {!isFlipped ? (
+          <div className="absolute inset-0 w-full h-full rounded-3xl p-6 sm:p-7 shadow-2xl flex flex-col justify-between border bg-zinc-900 border-zinc-800 hover:border-zinc-700 backface-hidden">
             <div className="h-full flex flex-col justify-between items-center text-center">
               {/* Тип картки зверху */}
               <span className="text-xs font-mono uppercase tracking-widest text-zinc-500">
@@ -154,9 +150,17 @@ export function CardViewScreen({
               {/* Чистий низ */}
               <div className="w-8 h-1 bg-zinc-800 rounded-full" />
             </div>
-          ) : (
-            /* ================= ЛИЦЬОВА СТОРОНА (ВМІСТ) ================= */
-            <div className="h-full flex flex-col justify-between text-left animate-in fade-in duration-200">
+          </div>
+
+          {/* ================= ЛИЦЬОВА СТОРОНА (ВМІСТ) ================= */}
+          <div
+            className={`absolute inset-0 w-full h-full rounded-3xl p-6 sm:p-7 shadow-2xl flex flex-col justify-between border backface-hidden rotate-y-180 ${
+              isSpecial
+                ? "bg-zinc-950 border-amber-500/60 shadow-amber-950/20 hover:border-amber-400"
+                : "bg-zinc-950 border-zinc-700 shadow-black hover:border-zinc-500"
+            }`}
+          >
+            <div className="h-full flex flex-col justify-between text-left">
               {/* Тип картки зверху */}
               <div className="flex items-center justify-between">
                 <div className={`flex items-center gap-2 text-xs font-mono uppercase tracking-wider ${
@@ -189,7 +193,7 @@ export function CardViewScreen({
               {/* Чистий низ */}
               <div className="w-8 h-1 bg-zinc-800 rounded-full" />
             </div>
-          )}
+          </div>
         </div>
       </div>
 
@@ -198,7 +202,7 @@ export function CardViewScreen({
         {/* Кнопка 1: Перевернути картку (сорочка/вміст) */}
         <button
           onClick={() => setIsFlipped(!isFlipped)}
-          className="w-full py-3 px-4 rounded-xl font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-2 bg-zinc-900 hover:bg-zinc-800 hover:border-zinc-700 hover:-translate-y-0.5 text-zinc-200 border border-zinc-800 active:translate-y-0.5 active:scale-98 transition-all cursor-pointer shadow-sm"
+          className="w-full py-3 px-4 rounded-xl font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-2 bg-zinc-900 hover:bg-zinc-800 hover:border-zinc-700 hover:scale-[0.985] text-zinc-200 border border-zinc-800 active:scale-[0.95] transition-all cursor-pointer shadow-sm"
         >
           {isFlipped ? (
             <>
@@ -218,10 +222,10 @@ export function CardViewScreen({
           <button
             onClick={handleStartApply}
             disabled={card.isUsed || isApplying}
-            className={`w-full py-3.5 px-4 rounded-xl font-black text-xs uppercase tracking-wider flex items-center justify-center gap-2 transition-all active:scale-98 cursor-pointer shadow-lg ${
+            className={`w-full py-3.5 px-4 rounded-xl font-black text-xs uppercase tracking-wider flex items-center justify-center gap-2 transition-all cursor-pointer shadow-lg hover:scale-[0.985] active:scale-[0.95] ${
               card.isUsed
                 ? "bg-zinc-900 border border-zinc-800 text-zinc-500 cursor-not-allowed"
-                : "bg-gradient-to-r from-amber-500 via-orange-500 to-amber-600 hover:from-amber-400 hover:to-orange-500 hover:-translate-y-0.5 hover:shadow-xl hover:shadow-amber-500/20 active:translate-y-0.5 text-zinc-950 shadow-amber-950/50"
+                : "bg-gradient-to-r from-amber-500 via-orange-500 to-amber-600 hover:from-amber-400 hover:to-orange-500 text-zinc-950 shadow-amber-950/50 hover:shadow-amber-500/20"
             }`}
           >
             {card.isUsed ? (
@@ -241,10 +245,10 @@ export function CardViewScreen({
           <button
             onClick={handleRevealToAll}
             disabled={card.isRevealedToAll}
-            className={`w-full py-3 px-4 rounded-xl font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-2 transition-all active:scale-98 cursor-pointer ${
+            className={`w-full py-3 px-4 rounded-xl font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-2 transition-all cursor-pointer hover:scale-[0.985] active:scale-[0.95] ${
               card.isRevealedToAll
                 ? "bg-zinc-900 border border-zinc-800 text-zinc-500 cursor-not-allowed"
-                : "bg-emerald-600 hover:bg-emerald-500 hover:-translate-y-0.5 hover:shadow-xl hover:shadow-emerald-950/60 active:translate-y-0.5 text-white shadow-lg shadow-emerald-950/40"
+                : "bg-emerald-600 hover:bg-emerald-500 text-white shadow-lg shadow-emerald-950/40 hover:shadow-emerald-950/60"
             }`}
           >
             {card.isRevealedToAll ? (
@@ -289,7 +293,7 @@ export function CardViewScreen({
                 <button
                   key={target.id}
                   onClick={() => setSelectedTargetId(target.id)}
-                  className={`w-full p-3 rounded-2xl border text-left transition-colors duration-150 cursor-pointer flex items-center justify-between active:scale-[0.99] ${
+                  className={`w-full p-3 rounded-2xl border text-left transition-all duration-150 cursor-pointer flex items-center justify-between hover:scale-[0.985] active:scale-[0.95] ${
                     selectedTargetId === target.id
                       ? "bg-amber-950/60 border-amber-500 text-white shadow-md shadow-amber-950/30"
                       : "bg-zinc-950/60 border-zinc-800/80 text-zinc-300 hover:border-zinc-700 hover:bg-zinc-900"
@@ -319,13 +323,13 @@ export function CardViewScreen({
                   setShowConfirmModal(true);
                 }}
                 disabled={!selectedTargetId}
-                className="flex-1 py-3 bg-amber-500 hover:bg-amber-400 disabled:opacity-50 text-zinc-950 font-black text-xs uppercase tracking-wider rounded-xl transition-all cursor-pointer shadow-lg hover:-translate-y-0.5 active:translate-y-0.5 active:scale-98"
+                className="flex-1 py-3 bg-amber-500 hover:bg-amber-400 disabled:opacity-50 text-zinc-950 font-black text-xs uppercase tracking-wider rounded-xl transition-all cursor-pointer shadow-lg hover:scale-[0.985] active:scale-[0.95]"
               >
                 Далі (Підтвердження)
               </button>
               <button
                 onClick={() => setShowTargetModal(false)}
-                className="py-3 px-4 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 font-bold text-xs uppercase tracking-wider rounded-xl transition-all cursor-pointer active:scale-95"
+                className="py-3 px-4 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 font-bold text-xs uppercase tracking-wider rounded-xl transition-all cursor-pointer hover:scale-[0.985] active:scale-[0.95]"
               >
                 Скасувати
               </button>

@@ -71,9 +71,9 @@ export function KickColumn({
         <button
           onClick={onKickClick}
           disabled={currentPlayer.isEliminated || Boolean(currentPlayer.cannotVote)}
-          className={`w-full py-3.5 px-4 font-bold text-xs uppercase tracking-wider rounded-xl transition-all duration-200 cursor-pointer hover:-translate-y-0.5 hover:shadow-xl active:translate-y-0.5 active:scale-98 ${
+          className={`w-full py-3.5 px-4 font-bold text-xs uppercase tracking-wider rounded-xl transition-all duration-150 cursor-pointer hover:scale-[0.985] active:scale-[0.95] ${
             currentPlayer.cannotVote
-              ? "bg-zinc-800/50 border border-zinc-800 text-zinc-500 cursor-not-allowed hover:translate-y-0 hover:shadow-none"
+              ? "bg-zinc-800/50 border border-zinc-800 text-zinc-500 cursor-not-allowed hover:scale-100"
               : hasVoted
               ? "bg-zinc-800 hover:bg-zinc-700 text-zinc-200 border border-zinc-700 hover:border-zinc-600"
               : "bg-red-600 hover:bg-red-500 text-white shadow-lg shadow-red-950/40 hover:shadow-red-950/70"

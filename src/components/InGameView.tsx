@@ -152,7 +152,7 @@ export function InGameView({
               <button
                 key={card.id}
                 onClick={() => setSelectedCard(card)}
-                className={`group w-full p-4 rounded-2xl border transition-colors duration-150 ease-out active:scale-[0.99] cursor-pointer flex items-center justify-between text-left ${
+                className={`group w-full p-4 rounded-2xl border transition-all duration-150 ease-out hover:scale-[0.985] active:scale-[0.95] cursor-pointer flex items-center justify-between text-left ${
                   card.isRevealedToAll
                     ? "bg-zinc-950/60 border-emerald-500/30 hover:border-emerald-500/60 hover:bg-zinc-950/90"
                     : "bg-zinc-950/40 border-zinc-800/50 hover:border-zinc-700/80 hover:bg-zinc-900/70"
@@ -258,7 +258,7 @@ export function InGameView({
           <button
             onClick={() => setIsLeaveModalOpen(true)}
             title="Покинути гру"
-            className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1 sm:py-1.5 text-xs font-medium text-zinc-400 hover:text-red-300 bg-zinc-900/90 hover:bg-red-950/30 border border-zinc-800 hover:border-red-500/40 rounded-xl transition-all cursor-pointer"
+            className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1 sm:py-1.5 text-xs font-medium text-zinc-400 hover:text-red-300 bg-zinc-900/90 hover:bg-red-950/30 border border-zinc-800 hover:border-red-500/40 rounded-xl transition-all hover:scale-[0.985] active:scale-[0.95] cursor-pointer"
           >
             <LogOut className="w-3.5 h-3.5" />
             <span className="text-xs">Вийти</span>
@@ -435,14 +435,14 @@ export function InGameView({
                   setIsLeaveModalOpen(false);
                   onLeaveRoom();
                 }}
-                className="w-full py-3 bg-red-600 hover:bg-red-500 text-white font-bold text-xs uppercase tracking-wider rounded-xl transition-all hover:-translate-y-0.5 hover:shadow-lg hover:shadow-red-950/40 active:translate-y-0.5 active:scale-98 cursor-pointer"
+                className="w-full py-3 bg-red-600 hover:bg-red-500 text-white font-bold text-xs uppercase tracking-wider rounded-xl transition-all hover:scale-[0.985] active:scale-[0.95] cursor-pointer shadow-lg shadow-red-950/40"
               >
                 Так, вийти
               </button>
 
               <button
                 onClick={() => setIsLeaveModalOpen(false)}
-                className="w-full py-2.5 bg-zinc-950 hover:bg-zinc-800 border border-zinc-800 text-zinc-400 hover:text-white font-medium text-xs rounded-xl transition-all hover:-translate-y-0.5 active:translate-y-0.5 active:scale-98 cursor-pointer"
+                className="w-full py-2.5 bg-zinc-950 hover:bg-zinc-800 border border-zinc-800 text-zinc-400 hover:text-white font-medium text-xs rounded-xl transition-all hover:scale-[0.985] active:scale-[0.95] cursor-pointer"
               >
                 Скасувати
               </button>

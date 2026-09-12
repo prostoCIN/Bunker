@@ -67,7 +67,7 @@ export function KickModal({
               <button
                 key={player.id}
                 onClick={() => handleVote(player.id)}
-                className={`group w-full p-3 rounded-2xl border text-left flex items-center justify-between transition-colors duration-150 cursor-pointer active:scale-[0.99] ${
+                className={`group w-full p-3 rounded-2xl border text-left flex items-center justify-between transition-all duration-150 cursor-pointer hover:scale-[0.985] active:scale-[0.95] ${
                   isVoted || isSelected
                     ? "bg-red-950/40 border-red-500/70 text-white shadow-md shadow-red-950/30"
                     : "bg-zinc-950/60 border-zinc-800 text-zinc-300 hover:border-red-500/50 hover:bg-red-950/20 hover:text-white"
