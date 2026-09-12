@@ -193,11 +193,6 @@ function GameApp() {
           )}
         </div>
 
-        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-400 text-xs font-mono font-semibold tracking-wider uppercase mb-3">
-          <ShieldAlert className="w-4 h-4 text-amber-400" />
-          <span>СХОВИЩЕ ОСТАННЬОЇ НАДІЇ</span>
-        </div>
-
         <h1 className="text-4xl sm:text-5xl font-black tracking-tight text-white uppercase drop-shadow-md">
           БУНКЕР
         </h1>
