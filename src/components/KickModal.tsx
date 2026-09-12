@@ -54,7 +54,7 @@ export function KickModal({
         </p>
 
         {/* Candidates flat list */}
-        <div className="space-y-2 max-h-72 overflow-y-auto custom-scrollbar pr-1">
+        <div className="space-y-2 max-h-72 overflow-y-auto custom-scrollbar p-1 pr-1.5">
           {candidates.map((player) => {
             const isSelf = player.id === currentPlayer.id;
             const isVoted = (room.votes || {})[currentPlayer.id] === player.id;
@@ -67,10 +67,10 @@ export function KickModal({
               <button
                 key={player.id}
                 onClick={() => handleVote(player.id)}
-                className={`group w-full p-3 rounded-2xl border text-left flex items-center justify-between transition-all duration-150 cursor-pointer hover:translate-x-1.5 hover:scale-[1.015] active:scale-98 ${
+                className={`group w-full p-3 rounded-2xl border text-left flex items-center justify-between transition-colors duration-150 cursor-pointer active:scale-[0.99] ${
                   isVoted || isSelected
-                    ? "bg-red-950/40 border-red-500/70 text-white shadow-lg shadow-red-950/40"
-                    : "bg-zinc-950/60 border-zinc-800 text-zinc-300 hover:border-red-500/40 hover:bg-red-950/20 hover:text-white"
+                    ? "bg-red-950/40 border-red-500/70 text-white shadow-md shadow-red-950/30"
+                    : "bg-zinc-950/60 border-zinc-800 text-zinc-300 hover:border-red-500/50 hover:bg-red-950/20 hover:text-white"
                 }`}
               >
                 <div className="flex items-center gap-2.5 min-w-0">

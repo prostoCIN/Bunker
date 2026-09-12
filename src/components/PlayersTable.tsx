@@ -48,7 +48,7 @@ export function PlayersTable({
       </div>
 
       {/* Players list */}
-      <div className="flex-1 overflow-y-auto space-y-4 pr-1.5 custom-scrollbar min-h-0">
+      <div className="flex-1 overflow-y-auto space-y-4 p-1 pr-1.5 custom-scrollbar min-h-0">
         {[...room.players]
           .filter((p) => !p.isSpectator && p.cards && p.cards.length > 0)
           .sort((a, b) => (a.playerNumber ?? 0) - (b.playerNumber ?? 0))
@@ -65,14 +65,14 @@ export function PlayersTable({
             return (
               <div
                 key={player.id}
-                className={`p-4 sm:p-5 rounded-2xl border transition-all duration-200 ease-out hover:translate-x-1 hover:shadow-lg hover:shadow-black/30 ${
+                className={`p-4 sm:p-5 rounded-2xl border transition-colors duration-150 ease-out ${
                   player.isEliminated
                     ? "opacity-50 bg-zinc-950/20 border-zinc-800/30"
                     : isCurrentTurn
                     ? "bg-zinc-900 border-amber-500/80 animate-active-turn"
                     : isSelf
                     ? "bg-zinc-950/60 border-emerald-500/30 hover:border-emerald-500/60"
-                    : "bg-zinc-950/40 border-zinc-800/50 hover:border-zinc-700/80"
+                    : "bg-zinc-950/40 border-zinc-800/50 hover:border-zinc-700/80 hover:bg-zinc-950/70"
                 }`}
               >
                 {/* Player Header */}
@@ -106,7 +106,7 @@ export function PlayersTable({
                     {revealedCards.map((card) => (
                       <div
                         key={card.id}
-                        className="bg-zinc-900/50 border border-zinc-800/50 p-2.5 rounded-xl flex items-start gap-2.5 transition-all duration-150 hover:scale-[1.015] hover:border-zinc-700/70 hover:bg-zinc-900/80 hover:shadow-sm"
+                        className="bg-zinc-900/50 border border-zinc-800/50 p-2.5 rounded-xl flex items-start gap-2.5 transition-colors duration-150 hover:border-zinc-700 hover:bg-zinc-900/90"
                       >
                         <span className="text-base shrink-0 mt-0.5">{card.icon}</span>
                         <div className="flex-1 min-w-0">

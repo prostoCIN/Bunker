@@ -125,12 +125,12 @@ export function CardViewScreen({
       <div className="w-full my-auto flex flex-col items-center">
         <div
           onClick={() => setIsFlipped(!isFlipped)}
-          className={`w-full max-w-xs sm:max-w-sm aspect-[3/4.2] rounded-3xl p-6 sm:p-7 transition-all duration-300 shadow-2xl flex flex-col justify-between relative border cursor-pointer select-none hover:-translate-y-1 hover:scale-[1.015] active:scale-[0.99] ${
+          className={`w-full max-w-xs sm:max-w-sm aspect-[3/4.2] rounded-3xl p-6 sm:p-7 transition-colors duration-200 shadow-2xl flex flex-col justify-between relative border cursor-pointer select-none active:scale-[0.99] ${
             isFlipped
               ? isSpecial
-                ? "bg-zinc-950 border-amber-500/60 shadow-amber-950/20 hover:border-amber-400/80 hover:shadow-amber-500/10"
-                : "bg-zinc-950 border-zinc-700 shadow-black hover:border-zinc-500 hover:shadow-zinc-900/40"
-              : "bg-zinc-900 border-zinc-800 shadow-black hover:border-zinc-700 hover:shadow-zinc-950/60"
+                ? "bg-zinc-950 border-amber-500/60 shadow-amber-950/20 hover:border-amber-400"
+                : "bg-zinc-950 border-zinc-700 shadow-black hover:border-zinc-500"
+              : "bg-zinc-900 border-zinc-800 shadow-black hover:border-zinc-700"
           }`}
         >
           {/* ================= СОРОЧКА КАРТКИ (РУБАШКА) ================= */}
@@ -284,15 +284,15 @@ export function CardViewScreen({
               «{card.value}»: виберіть гравця, на якого буде спрямовано дію картки.
             </p>
 
-            <div className="space-y-2 max-h-60 overflow-y-auto pr-1 custom-scrollbar mb-5">
+            <div className="space-y-2 max-h-60 overflow-y-auto p-1 pr-1.5 custom-scrollbar mb-5">
               {availableTargets.map((target) => (
                 <button
                   key={target.id}
                   onClick={() => setSelectedTargetId(target.id)}
-                  className={`w-full p-3 rounded-2xl border text-left transition-all cursor-pointer flex items-center justify-between hover:translate-x-1 hover:scale-[1.01] active:scale-[0.99] ${
+                  className={`w-full p-3 rounded-2xl border text-left transition-colors duration-150 cursor-pointer flex items-center justify-between active:scale-[0.99] ${
                     selectedTargetId === target.id
                       ? "bg-amber-950/60 border-amber-500 text-white shadow-md shadow-amber-950/30"
-                      : "bg-zinc-950/60 border-zinc-800/80 text-zinc-300 hover:border-zinc-700 hover:bg-zinc-950"
+                      : "bg-zinc-950/60 border-zinc-800/80 text-zinc-300 hover:border-zinc-700 hover:bg-zinc-900"
                   }`}
                 >
                   <div className="flex items-center gap-2.5">

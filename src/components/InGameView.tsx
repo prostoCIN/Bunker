@@ -146,16 +146,16 @@ export function InGameView({
         </div>
 
         {/* List of Parameter Plates with clean flex grid */}
-        <div className="flex-1 overflow-y-auto pr-1.5 custom-scrollbar min-h-0">
+        <div className="flex-1 overflow-y-auto p-1 pr-1.5 custom-scrollbar min-h-0">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-1 2xl:grid-cols-2 gap-2.5">
             {cards.map((card) => (
               <button
                 key={card.id}
                 onClick={() => setSelectedCard(card)}
-                className={`group w-full p-4 rounded-2xl border transition-all duration-200 ease-out active:scale-98 cursor-pointer flex items-center justify-between text-left hover:-translate-y-1 hover:scale-[1.012] hover:shadow-xl hover:shadow-black/50 ${
+                className={`group w-full p-4 rounded-2xl border transition-colors duration-150 ease-out active:scale-[0.99] cursor-pointer flex items-center justify-between text-left ${
                   card.isRevealedToAll
-                    ? "bg-zinc-950/60 border-emerald-500/30 hover:border-emerald-500/60"
-                    : "bg-zinc-950/40 border-zinc-800/50 hover:border-zinc-700/80"
+                    ? "bg-zinc-950/60 border-emerald-500/30 hover:border-emerald-500/60 hover:bg-zinc-950/90"
+                    : "bg-zinc-950/40 border-zinc-800/50 hover:border-zinc-700/80 hover:bg-zinc-900/70"
                 }`}
               >
                 <div className="flex items-center gap-3.5 min-w-0 pr-2">
