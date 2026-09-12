@@ -5,8 +5,7 @@ import { useSearchParams } from "next/navigation";
 import { GameRoom, Player } from "@/types/game";
 import { PlayerCharacterCard } from "@/data/characterData";
 import { LobbyScreen } from "@/components/LobbyScreen";
-import { PlayerHand } from "@/components/PlayerHand";
-import { CardViewScreen } from "@/components/CardViewScreen";
+import { InGameView } from "@/components/InGameView";
 import { JoinModal } from "@/components/JoinModal";
 import { roomManager } from "@/lib/roomManager";
 import { generateRandomName } from "@/lib/utils";
@@ -206,23 +205,11 @@ function GameApp() {
 
   // 1. If in room and game is IN PROGRESS:
   if (currentRoom && currentPlayer && currentRoom.status === "in_game") {
-    // If a specific card was tapped -> Show Card Screen
-    if (selectedCard) {
-      return (
-        <CardViewScreen
-          card={selectedCard}
-          onBack={() => setSelectedCard(null)}
-          onRevealToAll={handleRevealToAll}
-        />
-      );
-    }
-
-    // Else show "Рука гравця" (Player Hand)
     return (
-      <PlayerHand
+      <InGameView
         room={currentRoom}
         currentPlayer={currentPlayer}
-        onSelectCard={(card) => setSelectedCard(card)}
+        onRevealCardToAll={handleRevealToAll}
       />
     );
   }
