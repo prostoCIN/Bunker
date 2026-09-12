@@ -426,7 +426,7 @@ function GameApp() {
           <input
             type="text"
             value={playerName}
-            maxLength={20}
+            maxLength={26}
             onChange={(e) => handleNameChange(e.target.value)}
             placeholder="Введіть ім'я..."
             className="flex-1 py-3 px-4 bg-zinc-950/60 border border-zinc-800 focus:border-zinc-500 rounded-xl text-white font-medium text-sm outline-none transition-colors"
