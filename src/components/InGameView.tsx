@@ -97,6 +97,8 @@ export function InGameView({
             card={selectedCard}
             room={room}
             currentPlayer={currentPlayer}
+            isMyTurn={isMyTurn}
+            isVotingPhase={isVotingPhase}
             onBack={() => setSelectedCard(null)}
             onRevealToAll={(cardId) => {
               onRevealCardToAll(cardId);
@@ -133,11 +135,6 @@ export function InGameView({
             <h2 className="text-base font-bold text-white tracking-wide">
               {currentPlayer.name}
             </h2>
-            {isMyTurn && !isVotingPhase && (
-              <span className="text-[10px] font-mono font-semibold text-emerald-400 bg-emerald-950/50 border border-emerald-500/30 px-2 py-0.5 rounded-md shrink-0 animate-pulse">
-                🎯 Ваш хід
-              </span>
-            )}
           </div>
 
           <span className="text-[11px] font-mono font-medium text-zinc-400 bg-zinc-800/60 border border-zinc-700/40 px-2.5 py-0.5 rounded-full shrink-0">

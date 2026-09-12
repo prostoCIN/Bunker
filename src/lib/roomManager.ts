@@ -508,6 +508,16 @@ export class RoomManager {
     const room = await this.getRoom(cleanCode);
     if (!room) return null;
 
+    // Guard: Only player whose turn it currently is can reveal cards during the presenting phase
+    if (room.status === "in_game") {
+      if (room.turnPhase !== "presenting" || room.currentTurnPlayerId !== playerId) {
+        console.warn(
+          `revealCardToAll rejected: not player's turn (${playerId} vs ${room.currentTurnPlayerId}, phase: ${room.turnPhase})`
+        );
+        return room;
+      }
+    }
+
     let revealedCategory = "";
     let revealedValue = "";
 
@@ -857,6 +867,16 @@ export class RoomManager {
 
     // If already used, do not re-apply
     if (specialCard.isUsed) return { room };
+
+    // Guard: Only player whose turn it currently is can use special actions during the presenting phase
+    if (room.status === "in_game") {
+      if (room.turnPhase !== "presenting" || room.currentTurnPlayerId !== playerId) {
+        console.warn(
+          `applySpecialAction rejected: not player's turn (${playerId} vs ${room.currentTurnPlayerId})`
+        );
+        return { room };
+      }
+    }
 
     const targetPlayer = targetPlayerId
       ? room.players.find((p) => p.id === targetPlayerId)

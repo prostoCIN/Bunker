@@ -20,6 +20,8 @@ interface CardViewScreenProps {
   card: PlayerCharacterCard;
   room?: GameRoom;
   currentPlayer?: Player;
+  isMyTurn?: boolean;
+  isVotingPhase?: boolean;
   onBack: () => void;
   onRevealToAll: (cardId: string) => void;
   onApplySpecialAction?: (
@@ -32,6 +34,8 @@ export function CardViewScreen({
   card,
   room,
   currentPlayer,
+  isMyTurn = false,
+  isVotingPhase = false,
   onBack,
   onRevealToAll,
   onApplySpecialAction,
@@ -61,12 +65,17 @@ export function CardViewScreen({
     return p.id !== currentPlayer?.id;
   });
 
+  const canReveal = Boolean(isMyTurn) && !isVotingPhase && !card.isRevealedToAll;
+  const canApplySpecial = Boolean(isMyTurn) && !isVotingPhase && !card.isUsed;
+
   const handleRevealToAll = () => {
+    if (!canReveal) return;
     setIsFlipped(true);
     onRevealToAll(card.id);
   };
 
   const handleStartApply = () => {
+    if (!canApplySpecial) return;
     setIsFlipped(true);
     if (isTargeted) {
       setShowTargetModal(true);
@@ -221,17 +230,29 @@ export function CardViewScreen({
         {isSpecial ? (
           <button
             onClick={handleStartApply}
-            disabled={card.isUsed || isApplying}
-            className={`w-full py-3.5 px-4 rounded-xl font-black text-xs uppercase tracking-wider flex items-center justify-center gap-2 transition-all cursor-pointer shadow-lg hover:scale-[0.985] active:scale-[0.95] ${
+            disabled={!canApplySpecial || isApplying}
+            className={`w-full py-3.5 px-4 rounded-xl font-black text-xs uppercase tracking-wider flex items-center justify-center gap-2 transition-all cursor-pointer shadow-lg ${
               card.isUsed
                 ? "bg-zinc-900 border border-zinc-800 text-zinc-500 cursor-not-allowed"
-                : "bg-gradient-to-r from-amber-500 via-orange-500 to-amber-600 hover:from-amber-400 hover:to-orange-500 text-zinc-950 shadow-amber-950/50 hover:shadow-amber-500/20"
+                : !canApplySpecial
+                ? "bg-zinc-900/60 border border-zinc-800 text-zinc-600 cursor-not-allowed"
+                : "bg-gradient-to-r from-amber-500 via-orange-500 to-amber-600 hover:from-amber-400 hover:to-orange-500 text-zinc-950 shadow-amber-950/50 hover:shadow-amber-500/20 hover:scale-[0.985] active:scale-[0.95]"
             }`}
           >
             {card.isUsed ? (
               <>
                 <Check className="w-4 h-4 text-zinc-500" />
                 <span>Дію вже застосовано</span>
+              </>
+            ) : !isMyTurn ? (
+              <>
+                <Sparkles className="w-4 h-4 text-zinc-600" />
+                <span>Зараз не ваш хід</span>
+              </>
+            ) : isVotingPhase ? (
+              <>
+                <Sparkles className="w-4 h-4 text-zinc-600" />
+                <span>Йде голосування</span>
               </>
             ) : (
               <>
@@ -244,17 +265,29 @@ export function CardViewScreen({
           /* ================= REGULAR CARD: REVEAL TO ALL ================= */
           <button
             onClick={handleRevealToAll}
-            disabled={card.isRevealedToAll}
-            className={`w-full py-3 px-4 rounded-xl font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-2 transition-all cursor-pointer hover:scale-[0.985] active:scale-[0.95] ${
+            disabled={!canReveal}
+            className={`w-full py-3 px-4 rounded-xl font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-2 transition-all cursor-pointer ${
               card.isRevealedToAll
                 ? "bg-zinc-900 border border-zinc-800 text-zinc-500 cursor-not-allowed"
-                : "bg-emerald-600 hover:bg-emerald-500 text-white shadow-lg shadow-emerald-950/40 hover:shadow-emerald-950/60"
+                : !canReveal
+                ? "bg-zinc-900/60 border border-zinc-800 text-zinc-600 cursor-not-allowed"
+                : "bg-emerald-600 hover:bg-emerald-500 text-white shadow-lg shadow-emerald-950/40 hover:shadow-emerald-950/60 hover:scale-[0.985] active:scale-[0.95]"
             }`}
           >
             {card.isRevealedToAll ? (
               <>
                 <Check className="w-4 h-4 text-emerald-400" />
                 <span>Відкрито всім</span>
+              </>
+            ) : !isMyTurn ? (
+              <>
+                <Users className="w-4 h-4 text-zinc-600" />
+                <span>Зараз не ваш хід</span>
+              </>
+            ) : isVotingPhase ? (
+              <>
+                <Users className="w-4 h-4 text-zinc-600" />
+                <span>Йде голосування</span>
               </>
             ) : (
               <>
