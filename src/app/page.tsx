@@ -363,7 +363,6 @@ function GameApp() {
         onApplySpecialAction={handleApplySpecialAction}
         onDismissActionMessage={handleDismissActionMessage}
         onEndTurn={handleEndTurn}
-        onSkipTurn={handleSkipTurn}
       />
     );
   }

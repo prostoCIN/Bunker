@@ -37,7 +37,6 @@ interface InGameViewProps {
   ) => Promise<{ peekedCard?: PlayerCharacterCard } | void>;
   onDismissActionMessage?: () => void;
   onEndTurn?: () => void;
-  onSkipTurn?: () => void;
 }
 
 type TabType = "catastrophe" | "table" | "hand" | "kick";
@@ -53,7 +52,6 @@ export function InGameView({
   onApplySpecialAction,
   onDismissActionMessage,
   onEndTurn,
-  onSkipTurn,
 }: InGameViewProps) {
   // Mobile active tab: "catastrophe" | "table" | "hand" | "kick"
   const [activeTab, setActiveTab] = useState<TabType>("hand");
@@ -332,7 +330,6 @@ export function InGameView({
             <PlayersTable
               room={room}
               currentPlayer={currentPlayer}
-              onSkipTurn={onSkipTurn}
             />
           )}
           {!isVotingPhase && activeTab === "hand" && renderHandContent()}
@@ -342,8 +339,6 @@ export function InGameView({
               currentPlayer={currentPlayer}
               onKickClick={() => setIsKickModalOpen(true)}
               onLeaveRoom={() => setIsLeaveModalOpen(true)}
-              onSkipTurn={onSkipTurn}
-              onEndTurn={onEndTurn}
             />
           )}
         </div>
@@ -361,7 +356,6 @@ export function InGameView({
           <PlayersTable
             room={room}
             currentPlayer={currentPlayer}
-            onSkipTurn={onSkipTurn}
           />
         </div>
 
@@ -375,8 +369,6 @@ export function InGameView({
               currentPlayer={currentPlayer}
               onKickClick={() => setIsKickModalOpen(true)}
               onLeaveRoom={() => setIsLeaveModalOpen(true)}
-              onSkipTurn={onSkipTurn}
-              onEndTurn={onEndTurn}
             />
           )}
         </div>
@@ -394,7 +386,6 @@ export function InGameView({
           <PlayersTable
             room={room}
             currentPlayer={currentPlayer}
-            onSkipTurn={onSkipTurn}
           />
         </div>
 
@@ -408,8 +399,6 @@ export function InGameView({
               currentPlayer={currentPlayer}
               onKickClick={() => setIsKickModalOpen(true)}
               onLeaveRoom={() => setIsLeaveModalOpen(true)}
-              onSkipTurn={onSkipTurn}
-              onEndTurn={onEndTurn}
             />
           )}
         </div>

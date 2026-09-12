@@ -8,8 +8,6 @@ interface KickColumnProps {
   currentPlayer: Player;
   onKickClick: () => void;
   onLeaveRoom?: () => void;
-  onSkipTurn?: () => void;
-  onEndTurn?: () => void;
 }
 
 export function KickColumn({

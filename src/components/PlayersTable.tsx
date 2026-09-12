@@ -2,18 +2,15 @@
 
 import React from "react";
 import { GameRoom, Player } from "@/types/game";
-import { SkipForward } from "lucide-react";
 
 interface PlayersTableProps {
   room: GameRoom;
   currentPlayer: Player;
-  onSkipTurn?: () => void;
 }
 
 export function PlayersTable({
   room,
   currentPlayer,
-  onSkipTurn,
 }: PlayersTableProps) {
   const alivePlayers = [...room.players]
     .filter((p) => !p.isEliminated)
@@ -120,21 +117,9 @@ export function PlayersTable({
 
                   {/* Turn progression badge in table */}
                   {isCurrentTurn && (
-                    <div className="flex items-center gap-1">
-                      <span className="text-[10px] font-bold text-amber-300 bg-amber-950/60 border border-amber-500/40 px-2 py-0.5 rounded-md">
-                        🎯 Зараз ходить
-                      </span>
-                      {currentPlayer.isHost && onSkipTurn && (
-                        <button
-                          onClick={onSkipTurn}
-                          title="Хост: передати хід наступному гравцю"
-                          className="text-[10px] text-amber-400 hover:text-white bg-amber-950/60 hover:bg-amber-900/80 border border-amber-500/40 px-1.5 py-0.5 rounded transition cursor-pointer flex items-center gap-0.5"
-                        >
-                          <SkipForward className="w-2.5 h-2.5" />
-                          <span>Пропустити</span>
-                        </button>
-                      )}
-                    </div>
+                    <span className="text-[10px] font-bold text-amber-300 bg-amber-950/60 border border-amber-500/40 px-2 py-0.5 rounded-md">
+                      🎯 Зараз ходить
+                    </span>
                   )}
 
                   {hasAlreadyPresented && (
