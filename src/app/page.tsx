@@ -291,6 +291,30 @@ function GameApp() {
     }
   };
 
+  // Apply Special Action
+  const handleApplySpecialAction = async (cardId: string, targetPlayerId?: string) => {
+    if (!currentRoom || !currentPlayer) return;
+    const result = await roomManager.applySpecialAction(
+      currentRoom.code,
+      currentPlayer.id,
+      cardId,
+      targetPlayerId
+    );
+    if (result && result.room) {
+      handleRoomSync(result.room);
+      return { peekedCard: result.peekedCard };
+    }
+  };
+
+  // Dismiss Action Message Banner
+  const handleDismissActionMessage = async () => {
+    if (!currentRoom) return;
+    const updated = await roomManager.clearLastActionMessage(currentRoom.code);
+    if (updated) {
+      handleRoomSync(updated);
+    }
+  };
+
   // ================= RENDER LOGIC =================
 
   // 1. If in room and game is IN PROGRESS:
@@ -315,6 +339,8 @@ function GameApp() {
         onCastVote={handleCastVote}
         onDismissExpelled={handleDismissExpelled}
         onMakeRpsChoice={handleMakeRpsChoice}
+        onApplySpecialAction={handleApplySpecialAction}
+        onDismissActionMessage={handleDismissActionMessage}
       />
     );
   }

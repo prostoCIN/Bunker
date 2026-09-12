@@ -15,7 +15,9 @@ import {
   ChevronRight, 
   Flame, 
   UserX,
-  Skull
+  Skull,
+  Zap,
+  X
 } from "lucide-react";
 
 interface InGameViewProps {
@@ -26,6 +28,11 @@ interface InGameViewProps {
   onCastVote: (targetPlayerId: string) => void;
   onDismissExpelled: () => void;
   onMakeRpsChoice: (choice: RpsChoice) => void;
+  onApplySpecialAction?: (
+    cardId: string,
+    targetPlayerId?: string
+  ) => Promise<{ peekedCard?: PlayerCharacterCard } | void>;
+  onDismissActionMessage?: () => void;
 }
 
 type TabType = "catastrophe" | "table" | "hand" | "kick";
@@ -38,6 +45,8 @@ export function InGameView({
   onCastVote,
   onDismissExpelled,
   onMakeRpsChoice,
+  onApplySpecialAction,
+  onDismissActionMessage,
 }: InGameViewProps) {
   // Mobile active tab: "catastrophe" | "table" | "hand" | "kick"
   const [activeTab, setActiveTab] = useState<TabType>("hand");
@@ -54,6 +63,8 @@ export function InGameView({
         <div className="w-full h-full flex flex-col">
           <CardViewScreen
             card={selectedCard}
+            room={room}
+            currentPlayer={currentPlayer}
             onBack={() => setSelectedCard(null)}
             onRevealToAll={(cardId) => {
               onRevealCardToAll(cardId);
@@ -62,6 +73,17 @@ export function InGameView({
                   ? { ...prev, isRevealedToAll: true }
                   : prev
               );
+            }}
+            onApplySpecialAction={async (cardId, targetPlayerId) => {
+              if (onApplySpecialAction) {
+                const res = await onApplySpecialAction(cardId, targetPlayerId);
+                setSelectedCard((prev) =>
+                  prev && prev.id === cardId
+                    ? { ...prev, isRevealedToAll: true, isUsed: true }
+                    : prev
+                );
+                return res;
+              }
             }}
           />
         </div>
@@ -141,6 +163,25 @@ export function InGameView({
 
   return (
     <div className="w-full flex-1 flex flex-col">
+      {/* Action Notification Banner */}
+      {room.lastActionMessage && (
+        <div className="w-full mb-3 py-2.5 px-4 bg-amber-950/85 border border-amber-500/80 rounded-2xl flex items-center justify-between gap-3 shadow-lg shadow-amber-950/40 text-amber-200 animate-in fade-in slide-in-from-top-2 duration-200 shrink-0">
+          <div className="flex items-center gap-2.5 text-xs sm:text-sm font-semibold min-w-0">
+            <Zap className="w-4 h-4 text-amber-400 shrink-0 animate-pulse" />
+            <span className="truncate">{room.lastActionMessage}</span>
+          </div>
+          {onDismissActionMessage && (
+            <button
+              onClick={onDismissActionMessage}
+              className="p-1 text-amber-400 hover:text-white rounded-lg hover:bg-amber-900/60 transition-colors cursor-pointer shrink-0"
+              title="Закрити сповіщення"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          )}
+        </div>
+      )}
+
       {/* ================= 1. MOBILE VIEW (<md, <768px): 4 TABS ================= */}
       <div className="md:hidden flex flex-col flex-1">
         {/* Top 4-Segment Switcher */}

@@ -30,6 +30,15 @@ export interface Player {
   isEliminated?: boolean;
   votedFor?: string;
   playerNumber?: number;
+  hasDoubleVote?: boolean;
+  hasImmunity?: boolean;
+  isQuarantined?: boolean;
+  cannotVote?: boolean;
+  hasMirrorShield?: boolean;
+  hasGoldPass?: boolean;
+  hasDiplomaticImmunity?: boolean;
+  hasSecondChanceDuel?: boolean;
+  hasLastBullet?: boolean;
 }
 
 export interface GameRoom {
@@ -41,4 +50,7 @@ export interface GameRoom {
   votes?: Record<string, string>; // voterId -> targetPlayerId
   lastExpelledName?: string;
   rpsDuel?: RpsDuel;
+  lastActionMessage?: string;
+  doorsLocked?: boolean;
+  extraBunkerSpots?: number;
 }

@@ -1,5 +1,6 @@
 import { GameRoom, Player, RpsChoice } from "@/types/game";
 import { getRandomCatastrophe } from "@/data/catastrophes";
+import { PlayerCharacterCard } from "@/data/characterData";
 import { generateRoomCode } from "./utils";
 import { supabase, isSupabaseConfigured } from "./supabase";
 import type { RealtimeChannel } from "@supabase/supabase-js";
@@ -40,19 +41,34 @@ export class RoomManager {
         })
       : [];
 
-    // 3. Recover rpsDuel and lastExpelledName
+    // 3. Recover rpsDuel, lastExpelledName, lastActionMessage, doorsLocked, extraBunkerSpots
     const rpsDuel =
       catastrophe._rpsDuel !== undefined ? catastrophe._rpsDuel : raw.rpsDuel;
     const lastExpelledName =
       catastrophe._lastExpelledName !== undefined
         ? catastrophe._lastExpelledName
         : raw.lastExpelledName;
+    const lastActionMessage =
+      catastrophe._lastActionMessage !== undefined
+        ? catastrophe._lastActionMessage
+        : raw.lastActionMessage;
+    const doorsLocked =
+      catastrophe._doorsLocked !== undefined
+        ? catastrophe._doorsLocked
+        : raw.doorsLocked;
+    const extraBunkerSpots =
+      catastrophe._extraBunkerSpots !== undefined
+        ? catastrophe._extraBunkerSpots
+        : raw.extraBunkerSpots;
 
     // Clean internal metadata from catastrophe object so it doesn't pollute UI
     const cleanCatastrophe = { ...catastrophe };
     delete cleanCatastrophe._votes;
     delete cleanCatastrophe._rpsDuel;
     delete cleanCatastrophe._lastExpelledName;
+    delete cleanCatastrophe._lastActionMessage;
+    delete cleanCatastrophe._doorsLocked;
+    delete cleanCatastrophe._extraBunkerSpots;
 
     return {
       ...raw,
@@ -61,6 +77,9 @@ export class RoomManager {
       votes,
       rpsDuel: rpsDuel || undefined,
       lastExpelledName: lastExpelledName || undefined,
+      lastActionMessage: lastActionMessage || undefined,
+      doorsLocked: doorsLocked || undefined,
+      extraBunkerSpots: extraBunkerSpots || undefined,
     };
   }
 
@@ -301,11 +320,23 @@ export class RoomManager {
       cards: p.cards && p.cards.length > 0 ? p.cards : generateCharacterCards(),
       isEliminated: false,
       votedFor: undefined,
+      hasDoubleVote: false,
+      hasImmunity: false,
+      isQuarantined: false,
+      cannotVote: false,
+      hasMirrorShield: false,
+      hasGoldPass: false,
+      hasDiplomaticImmunity: false,
+      hasSecondChanceDuel: false,
+      hasLastBullet: false,
     }));
     room.status = "in_game";
     room.votes = {};
     delete room.rpsDuel;
     delete room.lastExpelledName;
+    delete room.lastActionMessage;
+    delete room.doorsLocked;
+    delete room.extraBunkerSpots;
 
     await this.updateRoom(room);
     return room;
@@ -363,8 +394,8 @@ export class RoomManager {
 
     // Active (alive) players
     const activePlayers = room.players.filter((p) => !p.isEliminated);
-    const isVoterActive = activePlayers.some((p) => p.id === voterId);
-    if (!isVoterActive) return room;
+    const voter = activePlayers.find((p) => p.id === voterId);
+    if (!voter || voter.cannotVote) return room;
 
     const votes = { ...(room.votes || {}), [voterId]: targetPlayerId };
     room.votes = votes;
@@ -372,18 +403,34 @@ export class RoomManager {
       p.id === voterId ? { ...p, votedFor: targetPlayerId } : p
     );
 
-    // Check if EVERY active player has cast their vote
-    const votedCount = activePlayers.filter((p) => votes[p.id]).length;
-    const allVoted = activePlayers.length > 0 && votedCount >= activePlayers.length;
+    // Check if EVERY active eligible player has cast their vote
+    const eligibleVoters = activePlayers.filter((p) => !p.cannotVote);
+    const votedCount = eligibleVoters.filter((p) => votes[p.id]).length;
+    const allVoted = eligibleVoters.length > 0 && votedCount >= eligibleVoters.length;
 
     if (allVoted) {
-      // Tally votes
+      // Tally votes considering double vote and mirror shield
       const tally: Record<string, number> = {};
-      for (const p of activePlayers) {
-        const target = votes[p.id];
+      for (const p of eligibleVoters) {
+        let target = votes[p.id];
         if (target) {
-          tally[target] = (tally[target] || 0) + 1;
+          const targetPlayer = room.players.find((tp) => tp.id === target);
+          if (targetPlayer?.hasMirrorShield && targetPlayer.id !== p.id) {
+            target = p.id; // Bounces back
+          }
+          const weight = p.hasDoubleVote ? 2 : 1;
+          tally[target] = (tally[target] || 0) + weight;
         }
+      }
+
+      // If doors are locked:
+      if (room.doorsLocked) {
+        room.lastExpelledName = "🚪 Броньовані двері заблоковано! У цьому раунді нікого не буде вигнано.";
+        delete room.doorsLocked;
+        room.votes = {};
+        room.players = room.players.map((p) => ({ ...p, votedFor: undefined }));
+        await this.updateRoom(room);
+        return room;
       }
 
       // Find highest vote count
@@ -399,12 +446,20 @@ export class RoomManager {
       }
 
       if (topCandidates.length === 1) {
-        // Single winner -> direct expulsion
+        // Single winner -> check immunity or gold pass
         const expelled = room.players.find((p) => p.id === topCandidates[0]);
         if (expelled) {
-          expelled.isEliminated = true;
-          expelled.votedFor = undefined;
-          room.lastExpelledName = `${expelled.playerNumber ? `#${expelled.playerNumber} ` : ""}${expelled.name}`;
+          if (expelled.hasImmunity) {
+            delete expelled.hasImmunity;
+            room.lastExpelledName = `🛡️ #${expelled.playerNumber ?? "?"} ${expelled.name} захищений імунітетом від вигнання!`;
+          } else if (expelled.hasGoldPass && maxVotes < Math.ceil(eligibleVoters.length / 2)) {
+            delete expelled.hasGoldPass;
+            room.lastExpelledName = `🎟️ #${expelled.playerNumber ?? "?"} ${expelled.name} захищений Золотим пропуском!`;
+          } else {
+            expelled.isEliminated = true;
+            expelled.votedFor = undefined;
+            room.lastExpelledName = `${expelled.playerNumber ? `#${expelled.playerNumber} ` : ""}${expelled.name}`;
+          }
         }
         // RESET VOTES FOR ALL PLAYERS
         room.votes = {};
@@ -501,12 +556,315 @@ export class RoomManager {
     return room;
   }
 
+  async applySpecialAction(
+    code: string,
+    playerId: string,
+    cardId: string,
+    targetPlayerId?: string
+  ): Promise<{ room: GameRoom; peekedCard?: PlayerCharacterCard } | null> {
+    const cleanCode = code.trim().toUpperCase();
+    const room = await this.getRoom(cleanCode);
+    if (!room) return null;
+
+    const actingPlayer = room.players.find((p) => p.id === playerId);
+    if (!actingPlayer || !actingPlayer.cards) return null;
+
+    const specialCard = actingPlayer.cards.find((c) => c.id === cardId);
+    if (!specialCard) return null;
+
+    // If already used, do not re-apply
+    if (specialCard.isUsed) return { room };
+
+    const targetPlayer = targetPlayerId
+      ? room.players.find((p) => p.id === targetPlayerId)
+      : undefined;
+
+    let peekedCard: PlayerCharacterCard | undefined = undefined;
+    let actionLog = "";
+
+    const cardVal = specialCard.value;
+    const actorNum = actingPlayer.playerNumber ? `#${actingPlayer.playerNumber} ` : "";
+    const targetNum = targetPlayer?.playerNumber ? `#${targetPlayer.playerNumber} ` : "";
+
+    // 1. "Право другого голосу"
+    if (cardVal.includes("Право другого голосу")) {
+      actingPlayer.hasDoubleVote = true;
+      actionLog = `⚡ ${actorNum}${actingPlayer.name} активував картку «Право другого голосу» — його голос тепер рахується за два!`;
+    }
+    // 2. "Обмін багажем"
+    else if (cardVal.includes("Обмін багажем") && targetPlayer && targetPlayer.cards) {
+      const myLuggageIdx = actingPlayer.cards.findIndex((c) => c.category === "luggage");
+      const targetLuggageIdx = targetPlayer.cards.findIndex((c) => c.category === "luggage");
+      if (myLuggageIdx !== -1 && targetLuggageIdx !== -1) {
+        const temp = { ...actingPlayer.cards[myLuggageIdx] };
+        actingPlayer.cards[myLuggageIdx] = {
+          ...targetPlayer.cards[targetLuggageIdx],
+          id: "card_luggage",
+        };
+        targetPlayer.cards[targetLuggageIdx] = {
+          ...temp,
+          id: "card_luggage",
+        };
+        actionLog = `⚡ ${actorNum}${actingPlayer.name} обмінявся карткою багажу з ${targetNum}${targetPlayer.name}!`;
+      }
+    }
+    // 3. "Шпигунський погляд"
+    else if (cardVal.includes("Шпигунський погляд") && targetPlayer && targetPlayer.cards) {
+      const unrevealed = targetPlayer.cards.filter((c) => !c.isRevealedToAll && c.category !== "special");
+      const pool = unrevealed.length > 0 ? unrevealed : targetPlayer.cards;
+      peekedCard = pool[Math.floor(Math.random() * pool.length)];
+      actionLog = `👁️ ${actorNum}${actingPlayer.name} застосував «Шпигунський погляд» і таємно підглянув закриту карту гравця ${targetNum}${targetPlayer.name}!`;
+    }
+    // 4. "Лікувальна сироватка"
+    else if (cardVal.includes("Лікувальна сироватка")) {
+      const recipient = targetPlayer || actingPlayer;
+      if (recipient.cards) {
+        const healthIdx = recipient.cards.findIndex((c) => c.category === "health");
+        if (healthIdx !== -1) {
+          recipient.cards[healthIdx] = {
+            ...recipient.cards[healthIdx],
+            value: "Абсолютно здоровий",
+            description: "Повністю зцілено за допомогою Лікувальної сироватки.",
+          };
+          const recNum = recipient.playerNumber ? `#${recipient.playerNumber} ` : "";
+          actionLog = `💉 ${actorNum}${actingPlayer.name} застосував «Лікувальну сироватку» на ${recNum}${recipient.name} — усі хвороби зцілено!`;
+        }
+      }
+    }
+    // 5. "Герметичний шлюз (+1 місце)"
+    else if (cardVal.includes("Герметичний шлюз")) {
+      room.extraBunkerSpots = (room.extraBunkerSpots || 0) + 1;
+      actionLog = `🏗️ ${actorNum}${actingPlayer.name} розширив «Герметичний шлюз»: місткість бункера збільшено на +1 особу!`;
+    }
+    // 6. "Імунітет від вигнання"
+    else if (cardVal.includes("Імунітет від вигнання")) {
+      actingPlayer.hasImmunity = true;
+      if (room.votes) {
+        for (const [voterId, targetId] of Object.entries(room.votes)) {
+          if (targetId === actingPlayer.id) {
+            delete room.votes[voterId];
+          }
+        }
+        room.players = room.players.map((p) =>
+          p.votedFor === actingPlayer.id ? { ...p, votedFor: undefined } : p
+        );
+      }
+      actionLog = `🛡️ ${actorNum}${actingPlayer.name} активував «Імунітет від вигнання»: його неможливо вигнати в цьому раунді!`;
+    }
+    // 7. "Переголосування раунду"
+    else if (cardVal.includes("Переголосування раунду")) {
+      room.votes = {};
+      room.players = room.players.map((p) => ({ ...p, votedFor: undefined }));
+      actionLog = `🔄 ${actorNum}${actingPlayer.name} оголосив «Переголосування раунду»: усі попередні голоси анульовано!`;
+    }
+    // 8. "Обмін здоров'ям"
+    else if (cardVal.includes("Обмін здоров'ям") && targetPlayer && targetPlayer.cards) {
+      const myHIdx = actingPlayer.cards.findIndex((c) => c.category === "health");
+      const targetHIdx = targetPlayer.cards.findIndex((c) => c.category === "health");
+      if (myHIdx !== -1 && targetHIdx !== -1) {
+        const temp = { ...actingPlayer.cards[myHIdx] };
+        actingPlayer.cards[myHIdx] = { ...targetPlayer.cards[targetHIdx], id: "card_health" };
+        targetPlayer.cards[targetHIdx] = { ...temp, id: "card_health" };
+        actionLog = `⚡ ${actorNum}${actingPlayer.name} обмінявся станом здоров'я з ${targetNum}${targetPlayer.name}!`;
+      }
+    }
+    // 9. "Дзеркальний щит"
+    else if (cardVal.includes("Дзеркальний щит")) {
+      actingPlayer.hasMirrorShield = true;
+      actionLog = `🪞 ${actorNum}${actingPlayer.name} підняв «Дзеркальний щит»: голоси проти нього будуть відбиті!`;
+    }
+    // 10. "Допит з пристрастю"
+    else if (cardVal.includes("Допит з пристрастю") && targetPlayer && targetPlayer.cards) {
+      const hidden = targetPlayer.cards.filter((c) => !c.isRevealedToAll);
+      if (hidden.length > 0) {
+        hidden[0].isRevealedToAll = true;
+        actionLog = `🔍 ${actorNum}${actingPlayer.name} провів «Допит з пристрастю»: ${targetNum}${targetPlayer.name} відкрив карту «${hidden[0].categoryName}: ${hidden[0].value}»!`;
+      } else {
+        actionLog = `🔍 ${actorNum}${actingPlayer.name} провів «Допит з пристрастю»: у гравця ${targetNum}${targetPlayer.name} уже всі карти були відкриті!`;
+      }
+    }
+    // 11. "Крадіжка професії"
+    else if (cardVal.includes("Крадіжка професії") && targetPlayer && targetPlayer.cards) {
+      const targetProf = targetPlayer.cards.find((c) => c.category === "profession");
+      const myProfIdx = actingPlayer.cards.findIndex((c) => c.category === "profession");
+      if (targetProf && myProfIdx !== -1) {
+        actingPlayer.cards[myProfIdx] = {
+          ...actingPlayer.cards[myProfIdx],
+          value: targetProf.value,
+          description: targetProf.description,
+        };
+        actionLog = `⚡ ${actorNum}${actingPlayer.name} перейняв професію «${targetProf.value}» у ${targetNum}${targetPlayer.name}!`;
+      }
+    }
+    // 12. "Другий шанс (Дуель)"
+    else if (cardVal.includes("Другий шанс")) {
+      actingPlayer.hasSecondChanceDuel = true;
+      actionLog = `⚔️ ${actorNum}${actingPlayer.name} підготував «Другий шанс»: право на поєдинок у разі спроби вигнання!`;
+    }
+    // 13. "Сплячий агент (Переродження)"
+    else if (cardVal.includes("Сплячий агент")) {
+      const { BIOLOGY } = await import("@/data/characterData");
+      const newBio = BIOLOGY[Math.floor(Math.random() * BIOLOGY.length)];
+      const bioIdx = actingPlayer.cards.findIndex((c) => c.category === "biology");
+      if (bioIdx !== -1) {
+        actingPlayer.cards[bioIdx] = {
+          ...actingPlayer.cards[bioIdx],
+          value: newBio.value,
+          description: newBio.description,
+        };
+      }
+      actionLog = `🧬 ${actorNum}${actingPlayer.name} активував протокол «Сплячий агент» і отримав нову біологію: «${newBio.value}»!`;
+    }
+    // 14. "Вето старійшини"
+    else if (cardVal.includes("Вето старійшини") && targetPlayer) {
+      targetPlayer.cannotVote = true;
+      if (room.votes && room.votes[targetPlayer.id]) {
+        delete room.votes[targetPlayer.id];
+      }
+      targetPlayer.votedFor = undefined;
+      actionLog = `🚫 ${actorNum}${actingPlayer.name} наклав «Вето старійшини»: гравець ${targetNum}${targetPlayer.name} позбавлений права голосу на цей раунд!`;
+    }
+    // 15. "Карантинний бокс"
+    else if (cardVal.includes("Карантинний бокс") && targetPlayer) {
+      targetPlayer.isQuarantined = true;
+      targetPlayer.cannotVote = true;
+      if (room.votes && room.votes[targetPlayer.id]) {
+        delete room.votes[targetPlayer.id];
+      }
+      targetPlayer.votedFor = undefined;
+      actionLog = `☣️ ${actorNum}${actingPlayer.name} ізолював гравця ${targetNum}${targetPlayer.name} в карантинному боксі!`;
+    }
+    // 16. "Обмін хобі"
+    else if (cardVal.includes("Обмін хобі") && targetPlayer && targetPlayer.cards) {
+      const myHIdx = actingPlayer.cards.findIndex((c) => c.category === "hobby");
+      const targetHIdx = targetPlayer.cards.findIndex((c) => c.category === "hobby");
+      if (myHIdx !== -1 && targetHIdx !== -1) {
+        const temp = { ...actingPlayer.cards[myHIdx] };
+        actingPlayer.cards[myHIdx] = { ...targetPlayer.cards[targetHIdx], id: "card_hobby" };
+        targetPlayer.cards[targetHIdx] = { ...temp, id: "card_hobby" };
+        actionLog = `🎯 ${actorNum}${actingPlayer.name} обмінявся хобі з ${targetNum}${targetPlayer.name}!`;
+      }
+    }
+    // 17. "Інспекція рюкзаків"
+    else if (cardVal.includes("Інспекція рюкзаків")) {
+      for (const p of room.players) {
+        if (p.cards) {
+          const lug = p.cards.find((c) => c.category === "luggage");
+          if (lug) lug.isRevealedToAll = true;
+        }
+      }
+      actionLog = `🎒 ${actorNum}${actingPlayer.name} провів «Інспекцію рюкзаків»: багаж усіх гравців відкрито!`;
+    }
+    // 18. "Санітарна обробка"
+    else if (cardVal.includes("Санітарна обробка")) {
+      for (const p of room.players) {
+        if (p.cards) {
+          const h = p.cards.find((c) => c.category === "health");
+          if (h) {
+            h.value = "Абсолютно здоровий";
+            h.description = "Очищено під час загальної санітарної обробки.";
+          }
+        }
+      }
+      actionLog = `✨ ${actorNum}${actingPlayer.name} провів «Санітарну обробку»: хвороби всіх гравців вилікувано!`;
+    }
+    // 19. "Броньовані двері"
+    else if (cardVal.includes("Броньовані двері")) {
+      room.doorsLocked = true;
+      actionLog = `🚪 ${actorNum}${actingPlayer.name} заблокував «Броньовані двері»: цього раунду ніхто не вибуває!`;
+    }
+    // 20. "Обмін біографічним фактом"
+    else if (cardVal.includes("Обмін біографічним фактом") && targetPlayer && targetPlayer.cards) {
+      const myFIdx = actingPlayer.cards.findIndex((c) => c.category === "fact");
+      const targetFIdx = targetPlayer.cards.findIndex((c) => c.category === "fact");
+      if (myFIdx !== -1 && targetFIdx !== -1) {
+        const temp = { ...actingPlayer.cards[myFIdx] };
+        actingPlayer.cards[myFIdx] = { ...targetPlayer.cards[targetFIdx], id: "card_fact" };
+        targetPlayer.cards[targetFIdx] = { ...temp, id: "card_fact" };
+        actionLog = `📜 ${actorNum}${actingPlayer.name} обмінявся фактом біографії з ${targetNum}${targetPlayer.name}!`;
+      }
+    }
+    // 21. "Саботаж голосування"
+    else if (cardVal.includes("Саботаж голосування")) {
+      if (room.votes) {
+        const voterKeys = Object.keys(room.votes);
+        if (voterKeys.length > 0) {
+          const victimVoter = voterKeys[Math.floor(Math.random() * voterKeys.length)];
+          delete room.votes[victimVoter];
+          const victimP = room.players.find((p) => p.id === victimVoter);
+          if (victimP) victimP.votedFor = undefined;
+        }
+      }
+      actionLog = `💣 ${actorNum}${actingPlayer.name} здійснив «Саботаж голосування»: один із голосів було викрадено!`;
+    }
+    // 22. "Повна сповідь"
+    else if (cardVal.includes("Повна сповідь") && targetPlayer && targetPlayer.cards) {
+      for (const c of targetPlayer.cards) {
+        c.isRevealedToAll = true;
+      }
+      actionLog = `📜 ${actorNum}${actingPlayer.name} змусив гравця ${targetNum}${targetPlayer.name} розкрити ВСІ свої карти перед бункером!`;
+    }
+    // 23. "Останній патрон"
+    else if (cardVal.includes("Останній патрон")) {
+      actingPlayer.hasLastBullet = true;
+      actionLog = `💥 ${actorNum}${actingPlayer.name} зарядив «Останній патрон»: право забрати кривдника назовні при вигнанні!`;
+    }
+    // 24. "Золотий пропуск"
+    else if (cardVal.includes("Золотий пропуск")) {
+      actingPlayer.hasGoldPass = true;
+      actionLog = `🎟️ ${actorNum}${actingPlayer.name} пред'явив «Золотий пропуск»: гарантована недоторканність!`;
+    }
+    // 25. "Дипломатичний захист"
+    else if (cardVal.includes("Дипломатичний захист")) {
+      actingPlayer.hasDiplomaticImmunity = true;
+      actionLog = `🕊️ ${actorNum}${actingPlayer.name} отримав «Дипломатичний захист» від примусового розкриття карт!`;
+    }
+    // 26. "Зміна катастрофи (Нова загроза)"
+    else if (cardVal.includes("Зміна катастрофи")) {
+      const { CATASTROPHES } = await import("@/data/catastrophes");
+      const others = CATASTROPHES.filter((c) => c.id !== room.catastrophe.id);
+      const newCat = others.length > 0 ? others[Math.floor(Math.random() * others.length)] : CATASTROPHES[0];
+      room.catastrophe = newCat;
+      actionLog = `⚠️ ${actorNum}${actingPlayer.name} викликав зміну катастрофи: нова загроза — «${newCat.title}»!`;
+    }
+    // 27. "Амнезія суперника"
+    else if (cardVal.includes("Амнезія суперника") && targetPlayer && targetPlayer.cards) {
+      const targetSpecial = targetPlayer.cards.find((c) => c.category === "special");
+      if (targetSpecial) {
+        targetSpecial.isUsed = true;
+        targetSpecial.description = `[ЗАБЛОКОВАНО АМНЕЗІЄЮ] ${targetSpecial.description}`;
+      }
+      actionLog = `🧠 ${actorNum}${actingPlayer.name} застосував «Амнезію» на ${targetNum}${targetPlayer.name}: його спецдію заблоковано!`;
+    }
+    else {
+      actionLog = `⚡ ${actorNum}${actingPlayer.name} застосував спеціальну дію «${specialCard.value}»!`;
+    }
+
+    // Mark card as revealed and used
+    specialCard.isRevealedToAll = true;
+    specialCard.isUsed = true;
+    room.lastActionMessage = actionLog;
+
+    await this.updateRoom(room);
+    return { room, peekedCard };
+  }
+
   async clearLastExpelled(code: string): Promise<GameRoom | null> {
     const cleanCode = code.trim().toUpperCase();
     const room = await this.getRoom(cleanCode);
     if (!room) return null;
 
     delete room.lastExpelledName;
+    await this.updateRoom(room);
+    return room;
+  }
+
+  async clearLastActionMessage(code: string): Promise<GameRoom | null> {
+    const cleanCode = code.trim().toUpperCase();
+    const room = await this.getRoom(cleanCode);
+    if (!room) return null;
+
+    delete room.lastActionMessage;
     await this.updateRoom(room);
     return room;
   }
@@ -522,6 +880,9 @@ export class RoomManager {
           _votes: normalized.votes || {},
           _rpsDuel: normalized.rpsDuel || null,
           _lastExpelledName: normalized.lastExpelledName || null,
+          _lastActionMessage: normalized.lastActionMessage || null,
+          _doorsLocked: normalized.doorsLocked || false,
+          _extraBunkerSpots: normalized.extraBunkerSpots || 0,
         };
 
         await supabase

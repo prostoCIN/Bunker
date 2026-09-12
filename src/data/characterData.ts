@@ -422,6 +422,25 @@ export interface PlayerCharacterCard {
   value: string;
   description: string;
   isRevealedToAll: boolean;
+  isUsed?: boolean;
+}
+
+export function isTargetedSpecialAction(cardValue: string): boolean {
+  const targetedKeywords = [
+    "Обмін багажем",
+    "Обмін хобі",
+    "Обмін біографічним фактом",
+    "Обмін здоров'ям",
+    "Крадіжка професії",
+    "Лікувальна сироватка",
+    "Шпигунський погляд",
+    "Повна сповідь",
+    "Допит з пристрастю",
+    "Вето старійшини",
+    "Карантинний бокс",
+    "Амнезія суперника",
+  ];
+  return targetedKeywords.some((keyword) => cardValue.includes(keyword));
 }
 
 function getRandomItem<T>(arr: T[]): T {

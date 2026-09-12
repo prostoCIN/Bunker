@@ -64,6 +64,21 @@ export function PlayersTable({ room, currentPlayer }: PlayersTableProps) {
                       Вигнано
                     </span>
                   )}
+                  {player.hasImmunity && (
+                    <span className="text-[10px] font-bold text-blue-400 bg-blue-950/60 border border-blue-500/40 px-2 py-0.5 rounded-md">
+                      🛡️ Імунітет
+                    </span>
+                  )}
+                  {player.hasDoubleVote && (
+                    <span className="text-[10px] font-bold text-amber-400 bg-amber-950/60 border border-amber-500/40 px-2 py-0.5 rounded-md">
+                      ⚡ 2x Голос
+                    </span>
+                  )}
+                  {player.cannotVote && !player.isEliminated && (
+                    <span className="text-[10px] font-bold text-zinc-400 bg-zinc-800 border border-zinc-700 px-2 py-0.5 rounded-md">
+                      🚫 Без голосу
+                    </span>
+                  )}
                 </div>
 
                 <span className="text-xs font-mono text-zinc-500 shrink-0">
@@ -85,10 +100,21 @@ export function PlayersTable({ room, currentPlayer }: PlayersTableProps) {
                     >
                       <span className="text-base shrink-0 mt-0.5">{card.icon}</span>
                       <div className="flex-1 min-w-0">
-                        <span className="text-zinc-500 text-[10px] font-mono uppercase tracking-wider block">
-                          {card.categoryName}
-                        </span>
-                        <span className="text-zinc-100 font-semibold text-sm leading-snug block break-words">
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          <span className="text-zinc-500 text-[10px] font-mono uppercase tracking-wider block">
+                            {card.categoryName}
+                          </span>
+                          {card.category === "special" && (
+                            <span className={`text-[9px] font-mono font-bold px-1.5 py-0.2 rounded border ${
+                              card.isUsed
+                                ? "bg-zinc-800 text-zinc-400 border-zinc-700"
+                                : "bg-amber-950/80 text-amber-300 border-amber-500/40"
+                            }`}>
+                              {card.isUsed ? "Застосовано" : "Спецдія"}
+                            </span>
+                          )}
+                        </div>
+                        <span className="text-zinc-100 font-semibold text-sm leading-snug block break-words mt-0.5">
                           {card.value}
                         </span>
                       </div>
