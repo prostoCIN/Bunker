@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { GameRoom, Player } from "@/types/game";
 import { UserX, ShieldAlert, X, Check, Users } from "lucide-react";
 
@@ -23,6 +23,12 @@ export function KickModal({
   const [selectedTargetId, setSelectedTargetId] = useState<string | null>(
     currentMyVote
   );
+
+  useEffect(() => {
+    if (isOpen) {
+      setSelectedTargetId((room.votes || {})[currentPlayer.id] || null);
+    }
+  }, [isOpen, room.votes, currentPlayer.id]);
 
   if (!isOpen) return null;
 

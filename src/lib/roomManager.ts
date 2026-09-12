@@ -10,6 +10,59 @@ export class RoomManager {
   private localChannel: BroadcastChannel | null = null;
   private supabaseChannel: RealtimeChannel | null = null;
 
+  /**
+   * Unpack raw room payload from Supabase or localStorage and guarantee that
+   * votes, rpsDuel, and lastExpelledName are preserved even across schema boundaries.
+   */
+  private normalizeRoom(raw: any): GameRoom {
+    if (!raw) return raw;
+
+    const catastrophe = raw.catastrophe ? { ...raw.catastrophe } : {};
+
+    // 1. Recover votes from catastrophe metadata and raw.votes
+    const votes: Record<string, string> = {
+      ...(catastrophe._votes || {}),
+      ...(raw.votes || {}),
+    };
+
+    // 2. Recover votes from players array if present
+    const players: Player[] = Array.isArray(raw.players)
+      ? raw.players.map((p: any) => {
+          const voterChoice = p.votedFor || votes[p.id];
+          if (voterChoice) {
+            votes[p.id] = voterChoice;
+          }
+          return {
+            ...p,
+            votedFor: voterChoice,
+          };
+        })
+      : [];
+
+    // 3. Recover rpsDuel and lastExpelledName
+    const rpsDuel =
+      catastrophe._rpsDuel !== undefined ? catastrophe._rpsDuel : raw.rpsDuel;
+    const lastExpelledName =
+      catastrophe._lastExpelledName !== undefined
+        ? catastrophe._lastExpelledName
+        : raw.lastExpelledName;
+
+    // Clean internal metadata from catastrophe object so it doesn't pollute UI
+    const cleanCatastrophe = { ...catastrophe };
+    delete cleanCatastrophe._votes;
+    delete cleanCatastrophe._rpsDuel;
+    delete cleanCatastrophe._lastExpelledName;
+
+    return {
+      ...raw,
+      catastrophe: cleanCatastrophe,
+      players,
+      votes,
+      rpsDuel: rpsDuel || undefined,
+      lastExpelledName: lastExpelledName || undefined,
+    };
+  }
+
   initChannel(roomCode: string, onUpdate: (room: GameRoom) => void) {
     this.cleanup();
     const cleanCode = roomCode.trim().toUpperCase();
@@ -28,7 +81,7 @@ export class RoomManager {
           },
           (payload) => {
             if (payload.new) {
-              const newRoom = payload.new as GameRoom;
+              const newRoom = this.normalizeRoom(payload.new);
               this.saveLocalRoom(newRoom);
               onUpdate(newRoom);
             }
@@ -36,19 +89,21 @@ export class RoomManager {
         )
         .on("broadcast", { event: "room_sync" }, ({ payload }) => {
           if (payload && payload.code === cleanCode) {
-            this.saveLocalRoom(payload as GameRoom);
-            onUpdate(payload as GameRoom);
+            const newRoom = this.normalizeRoom(payload);
+            this.saveLocalRoom(newRoom);
+            onUpdate(newRoom);
           }
         })
         .subscribe();
     }
 
-    // 2. Local fallback BroadcastChannel (for instant multi-tab sync on same machine)
+    // 2. Local fallback BroadcastChannel (for multi-tab sync on same machine)
     if (typeof window !== "undefined" && "BroadcastChannel" in window) {
       this.localChannel = new BroadcastChannel(`bunker_room_${cleanCode}`);
       this.localChannel.onmessage = (event) => {
         if (event.data && event.data.code === cleanCode) {
-          onUpdate(event.data);
+          const newRoom = this.normalizeRoom(event.data);
+          onUpdate(newRoom);
         }
       };
     }
@@ -63,6 +118,7 @@ export class RoomManager {
       players: [{ ...hostPlayer, isHost: true }],
       status: "lobby",
       createdAt: Date.now(),
+      votes: {},
     };
 
     // Save locally
@@ -71,10 +127,17 @@ export class RoomManager {
     // Save to Supabase
     if (supabase && isSupabaseConfigured) {
       try {
+        const catastropheToSave = {
+          ...room.catastrophe,
+          _votes: {},
+          _rpsDuel: null,
+          _lastExpelledName: null,
+        };
+
         const { error } = await supabase.from("rooms").insert([
           {
             code: room.code,
-            catastrophe: room.catastrophe,
+            catastrophe: catastropheToSave,
             players: room.players,
             status: room.status,
           },
@@ -103,7 +166,7 @@ export class RoomManager {
           .maybeSingle();
 
         if (data && !error) {
-          const room = data as GameRoom;
+          const room = this.normalizeRoom(data);
           // If room has 0 players, automatically clean it up from DB
           if (!room.players || room.players.length === 0) {
             await this.deleteRoom(cleanCode);
@@ -121,11 +184,15 @@ export class RoomManager {
 
     // 2. Fallback to local storage
     const local = this.getLocalRoom(cleanCode);
-    if (local && (!local.players || local.players.length === 0)) {
-      await this.deleteRoom(cleanCode);
-      return null;
+    if (local) {
+      const room = this.normalizeRoom(local);
+      if (!room.players || room.players.length === 0) {
+        await this.deleteRoom(cleanCode);
+        return null;
+      }
+      return room;
     }
-    return local;
+    return null;
   }
 
   async leaveRoom(code: string, playerId: string): Promise<void> {
@@ -145,6 +212,11 @@ export class RoomManager {
     const wasHost = room.players.find((p) => p.id === playerId)?.isHost;
     if (wasHost && remainingPlayers.length > 0) {
       remainingPlayers[0].isHost = true;
+    }
+
+    // Remove leaving player's vote
+    if (room.votes && room.votes[playerId]) {
+      delete room.votes[playerId];
     }
 
     room.players = remainingPlayers;
@@ -206,8 +278,13 @@ export class RoomManager {
     room.players = room.players.map((p) => ({
       ...p,
       cards: p.cards && p.cards.length > 0 ? p.cards : generateCharacterCards(),
+      isEliminated: false,
+      votedFor: undefined,
     }));
     room.status = "in_game";
+    room.votes = {};
+    delete room.rpsDuel;
+    delete room.lastExpelledName;
 
     await this.updateRoom(room);
     return room;
@@ -247,7 +324,7 @@ export class RoomManager {
     if (!room) return null;
 
     room.players = room.players.map((p) =>
-      p.id === targetPlayerId ? { ...p, isEliminated: true } : p
+      p.id === targetPlayerId ? { ...p, isEliminated: true, votedFor: undefined } : p
     );
 
     await this.updateRoom(room);
@@ -270,6 +347,9 @@ export class RoomManager {
 
     const votes = { ...(room.votes || {}), [voterId]: targetPlayerId };
     room.votes = votes;
+    room.players = room.players.map((p) =>
+      p.id === voterId ? { ...p, votedFor: targetPlayerId } : p
+    );
 
     // Check if EVERY active player has cast their vote
     const votedCount = activePlayers.filter((p) => votes[p.id]).length;
@@ -302,9 +382,12 @@ export class RoomManager {
         const expelled = room.players.find((p) => p.id === topCandidates[0]);
         if (expelled) {
           expelled.isEliminated = true;
+          expelled.votedFor = undefined;
           room.lastExpelledName = expelled.name;
         }
+        // RESET VOTES FOR ALL PLAYERS
         room.votes = {};
+        room.players = room.players.map((p) => ({ ...p, votedFor: undefined }));
       } else if (topCandidates.length >= 2) {
         // TIE! Launch Rock-Paper-Scissors duel between tied candidates
         const p1 = room.players.find((p) => p.id === topCandidates[0]);
@@ -369,6 +452,7 @@ export class RoomManager {
 
         if (loser) {
           loser.isEliminated = true;
+          loser.votedFor = undefined;
           const choiceMap: Record<RpsChoice, string> = {
             rock: "🪨 Камінь",
             scissors: "✂️ Ножиці",
@@ -382,6 +466,7 @@ export class RoomManager {
 
         // Reset votes & remove duel
         room.votes = {};
+        room.players = room.players.map((p) => ({ ...p, votedFor: undefined }));
         delete room.rpsDuel;
       }
     }
@@ -401,25 +486,36 @@ export class RoomManager {
   }
 
   async updateRoom(room: GameRoom): Promise<GameRoom | null> {
-    this.saveLocalRoom(room);
+    const normalized = this.normalizeRoom(room);
+    this.saveLocalRoom(normalized);
 
     if (supabase && isSupabaseConfigured) {
       try {
+        const catastropheToSave = {
+          ...normalized.catastrophe,
+          _votes: normalized.votes || {},
+          _rpsDuel: normalized.rpsDuel || null,
+          _lastExpelledName: normalized.lastExpelledName || null,
+        };
+
         await supabase
           .from("rooms")
           .update({
-            catastrophe: room.catastrophe,
-            players: room.players,
-            status: room.status,
+            catastrophe: catastropheToSave,
+            players: normalized.players,
+            status: normalized.status,
           })
-          .eq("code", room.code);
+          .eq("code", normalized.code);
 
         // Broadcast to all active clients in this room immediately
         if (this.supabaseChannel) {
           this.supabaseChannel.send({
             type: "broadcast",
             event: "room_sync",
-            payload: room,
+            payload: {
+              ...normalized,
+              catastrophe: catastropheToSave,
+            },
           });
         }
       } catch (err) {
@@ -427,7 +523,7 @@ export class RoomManager {
       }
     }
 
-    return room;
+    return normalized;
   }
 
   private getLocalRoom(code: string): GameRoom | null {

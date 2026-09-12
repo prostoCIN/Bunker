@@ -26,6 +26,7 @@ export interface Player {
   joinedAt: number;
   cards?: PlayerCharacterCard[];
   isEliminated?: boolean;
+  votedFor?: string;
 }
 
 export interface GameRoom {

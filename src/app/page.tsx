@@ -5,6 +5,7 @@ import { useSearchParams } from "next/navigation";
 import { GameRoom, Player, RpsChoice } from "@/types/game";
 import { LobbyScreen } from "@/components/LobbyScreen";
 import { InGameView } from "@/components/InGameView";
+import { ExpelledScreen } from "@/components/ExpelledScreen";
 import { JoinModal } from "@/components/JoinModal";
 import { roomManager } from "@/lib/roomManager";
 import { generateRandomName } from "@/lib/utils";
@@ -294,6 +295,17 @@ function GameApp() {
 
   // 1. If in room and game is IN PROGRESS:
   if (currentRoom && currentPlayer && currentRoom.status === "in_game") {
+    // If this player was expelled from the bunker queue:
+    if (currentPlayer.isEliminated) {
+      return (
+        <ExpelledScreen
+          room={currentRoom}
+          currentPlayer={currentPlayer}
+          onLeaveRoom={handleLeaveRoom}
+        />
+      );
+    }
+
     return (
       <InGameView
         room={currentRoom}
