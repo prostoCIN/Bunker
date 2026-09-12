@@ -252,13 +252,6 @@ export function PlayersTable({
                   ))}
                 </div>
               )}
-
-              {/* Hidden count note */}
-              {hiddenCount > 0 && revealedCards.length > 0 && (
-                <div className="mt-2 text-[11px] text-zinc-500 font-mono">
-                  + {hiddenCount} прихованих характеристик
-                </div>
-              )}
             </div>
           );
         })}
