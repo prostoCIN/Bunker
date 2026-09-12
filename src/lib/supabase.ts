@@ -16,8 +16,31 @@ export const isSupabaseConfigured = Boolean(
     supabaseUrl.startsWith("https://")
 );
 
+// Custom fetch that proxies browser REST calls through Next.js /api/supabase rewrite.
+// This completely bypasses CORS restrictions, browser ad-blockers (Brave/uBlock), and firewall issues.
+const customFetch: typeof fetch = (input, init) => {
+  if (typeof window !== "undefined") {
+    if (typeof input === "string" && input.startsWith(supabaseUrl)) {
+      const proxiedUrl = input.replace(supabaseUrl, "/api/supabase");
+      return fetch(proxiedUrl, init);
+    }
+    if (input instanceof URL && input.href.startsWith(supabaseUrl)) {
+      const proxiedUrl = input.href.replace(supabaseUrl, "/api/supabase");
+      return fetch(proxiedUrl, init);
+    }
+    if (input instanceof Request && input.url.startsWith(supabaseUrl)) {
+      const proxiedUrl = input.url.replace(supabaseUrl, "/api/supabase");
+      return fetch(new Request(proxiedUrl, input), init);
+    }
+  }
+  return fetch(input, init);
+};
+
 export const supabase = isSupabaseConfigured
   ? createClient(supabaseUrl, supabaseAnonKey, {
+      global: {
+        fetch: customFetch,
+      },
       realtime: {
         params: {
           eventsPerSecond: 10,
