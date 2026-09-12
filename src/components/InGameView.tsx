@@ -178,25 +178,6 @@ export function InGameView({
 
   return (
     <div className="w-full flex-1 flex flex-col h-full min-h-0 overflow-hidden">
-      {/* Action Notification Banner */}
-      {room.lastActionMessage && (
-        <div className="w-full mb-3 py-2.5 px-4 bg-amber-950/85 border border-amber-500/80 rounded-2xl flex items-center justify-between gap-3 shadow-lg shadow-amber-950/40 text-amber-200 animate-in fade-in slide-in-from-top-2 duration-200 shrink-0">
-          <div className="flex items-center gap-2.5 text-xs sm:text-sm font-semibold min-w-0">
-            <Zap className="w-4 h-4 text-amber-400 shrink-0 animate-pulse" />
-            <span className="truncate">{room.lastActionMessage}</span>
-          </div>
-          {onDismissActionMessage && (
-            <button
-              onClick={onDismissActionMessage}
-              className="p-1 text-amber-400 hover:text-white rounded-lg hover:bg-amber-900/60 transition-colors cursor-pointer shrink-0"
-              title="Закрити сповіщення"
-            >
-              <X className="w-4 h-4" />
-            </button>
-          )}
-        </div>
-      )}
-
       {/* Turn System Status & Action Banner */}
       <div
         className={`w-full mb-3 p-3 sm:p-4 rounded-2xl border flex flex-col sm:flex-row sm:items-center justify-between gap-3 transition-all shrink-0 ${
