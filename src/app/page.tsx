@@ -7,13 +7,15 @@ import { LobbyScreen } from "@/components/LobbyScreen";
 import { JoinModal } from "@/components/JoinModal";
 import { roomManager } from "@/lib/roomManager";
 import { generateRandomName } from "@/lib/utils";
+import { isSupabaseConfigured } from "@/lib/supabase";
 import { 
   ShieldAlert, 
   LogIn, 
   PlusCircle, 
   Dices, 
-  Sparkles, 
-  Users 
+  Wifi, 
+  WifiOff, 
+  Loader2 
 } from "lucide-react";
 
 function GameApp() {
@@ -23,13 +25,17 @@ function GameApp() {
   const [currentRoom, setCurrentRoom] = useState<GameRoom | null>(null);
   const [isJoinModalOpen, setIsJoinModalOpen] = useState(false);
   const [joinError, setJoinError] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
 
   // Initialize player identity
   useEffect(() => {
-    const savedId = localStorage.getItem("bunker_player_id") || "p_" + Math.random().toString(36).substring(2, 9);
+    const savedId =
+      localStorage.getItem("bunker_player_id") ||
+      "p_" + Math.random().toString(36).substring(2, 9);
     localStorage.setItem("bunker_player_id", savedId);
 
-    const savedName = localStorage.getItem("bunker_player_name") || generateRandomName();
+    const savedName =
+      localStorage.getItem("bunker_player_name") || generateRandomName();
     setPlayerName(savedName);
 
     const player: Player = {
@@ -42,7 +48,6 @@ function GameApp() {
     };
     setCurrentPlayer(player);
 
-    // Check if query params have ?join=CODE
     const joinCode = searchParams.get("join");
     if (joinCode) {
       handleJoinByCode(joinCode.toUpperCase(), player);
@@ -64,45 +69,71 @@ function GameApp() {
   };
 
   // Create Lobby
-  const handleCreateLobby = () => {
+  const handleCreateLobby = async () => {
     if (!currentPlayer) return;
-    const host: Player = { ...currentPlayer, name: playerName || "Хост", isHost: true, isReady: false };
-    const room = roomManager.createRoom(host);
-    setCurrentPlayer(host);
-    setCurrentRoom(room);
+    setIsLoading(true);
+    try {
+      const host: Player = {
+        ...currentPlayer,
+        name: playerName || "Хост",
+        isHost: true,
+        isReady: false,
+      };
+      const room = await roomManager.createRoom(host);
+      setCurrentPlayer(host);
+      setCurrentRoom(room);
 
-    roomManager.initChannel(room.code, (updatedRoom) => {
-      setCurrentRoom(updatedRoom);
-    });
+      roomManager.initChannel(room.code, (updatedRoom) => {
+        setCurrentRoom(updatedRoom);
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   // Join Lobby
-  const handleJoinByCode = (code: string, activePlayer?: Player) => {
-    const playerToJoin = activePlayer || (currentPlayer ? { ...currentPlayer, name: playerName } : null);
+  const handleJoinByCode = async (code: string, activePlayer?: Player) => {
+    const playerToJoin =
+      activePlayer ||
+      (currentPlayer ? { ...currentPlayer, name: playerName } : null);
     if (!playerToJoin) return;
 
-    const room = roomManager.getRoom(code);
-    if (!room) {
-      setJoinError(`Лобі з кодом "${code}" не знайдено. Перевірте код або створіть нове.`);
-      return;
-    }
+    setIsLoading(true);
+    setJoinError(null);
 
-    const updatedRoom = roomManager.joinRoom(code, playerToJoin);
-    if (updatedRoom) {
-      setCurrentRoom(updatedRoom);
-      setIsJoinModalOpen(false);
-      setJoinError(null);
+    try {
+      const room = await roomManager.getRoom(code);
+      if (!room) {
+        setJoinError(
+          `Лобі з кодом "${code}" не знайдено. Перевірте код або створіть нове.`
+        );
+        return;
+      }
 
-      roomManager.initChannel(code, (syncedRoom) => {
-        setCurrentRoom(syncedRoom);
-      });
+      const updatedRoom = await roomManager.joinRoom(code, playerToJoin);
+      if (updatedRoom) {
+        setCurrentRoom(updatedRoom);
+        setIsJoinModalOpen(false);
+        setJoinError(null);
+
+        roomManager.initChannel(code, (syncedRoom) => {
+          setCurrentRoom(syncedRoom);
+        });
+      }
+    } catch {
+      setJoinError("Помилка підключення до лобі. Спробуйте ще раз.");
+    } finally {
+      setIsLoading(false);
     }
   };
 
   // Toggle Ready
-  const handleToggleReady = () => {
+  const handleToggleReady = async () => {
     if (!currentRoom || !currentPlayer) return;
-    const updated = roomManager.toggleReady(currentRoom.code, currentPlayer.id);
+    const updated = await roomManager.toggleReady(
+      currentRoom.code,
+      currentPlayer.id
+    );
     if (updated) {
       setCurrentRoom(updated);
       const updatedSelf = updated.players.find((p) => p.id === currentPlayer.id);
@@ -122,10 +153,10 @@ function GameApp() {
   };
 
   // Update room (e.g. reroll catastrophe)
-  const handleUpdateRoom = (updatedFields: Partial<GameRoom>) => {
+  const handleUpdateRoom = async (updatedFields: Partial<GameRoom>) => {
     if (!currentRoom) return;
     const updated = { ...currentRoom, ...updatedFields };
-    roomManager.saveRoom(updated);
+    await roomManager.updateRoom(updated);
     setCurrentRoom(updated);
   };
 
@@ -146,8 +177,23 @@ function GameApp() {
   return (
     <div className="w-full flex-1 flex flex-col justify-between items-center py-6 min-h-[90vh]">
       {/* Brand Header */}
-      <div className="w-full flex flex-col items-center text-center mt-6">
-        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-400 text-xs font-mono font-semibold tracking-wider uppercase mb-4">
+      <div className="w-full flex flex-col items-center text-center mt-4">
+        {/* Network indicator */}
+        <div className="flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-zinc-900 border border-zinc-800 text-[11px] font-mono text-zinc-400 mb-3">
+          {isSupabaseConfigured ? (
+            <>
+              <Wifi className="w-3 h-3 text-emerald-400" />
+              <span className="text-emerald-400">МЕРЕЖА: ОНЛАЙН (SUPABASE)</span>
+            </>
+          ) : (
+            <>
+              <WifiOff className="w-3 h-3 text-amber-400" />
+              <span className="text-amber-400">МЕРЕЖА: ЛОКАЛЬНИЙ РЕЖИМ</span>
+            </>
+          )}
+        </div>
+
+        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-400 text-xs font-mono font-semibold tracking-wider uppercase mb-3">
           <ShieldAlert className="w-4 h-4 text-amber-400" />
           <span>СХОВИЩЕ ОСТАННЬОЇ НАДІЇ</span>
         </div>
@@ -161,7 +207,7 @@ function GameApp() {
       </div>
 
       {/* Center: Player Name Card */}
-      <div className="w-full max-w-sm my-8 bg-zinc-900/90 border border-zinc-800 rounded-3xl p-5 shadow-2xl backdrop-blur-sm">
+      <div className="w-full max-w-sm my-6 bg-zinc-900/90 border border-zinc-800 rounded-3xl p-5 shadow-2xl backdrop-blur-sm">
         <label className="text-xs font-semibold text-zinc-400 uppercase tracking-wider block mb-2">
           Ваш позивний у сховищі:
         </label>
@@ -185,14 +231,21 @@ function GameApp() {
       </div>
 
       {/* Bottom: The Two Main Action Buttons */}
-      <div className="w-full max-w-sm flex flex-col gap-3.5 mb-6">
+      <div className="w-full max-w-sm flex flex-col gap-3.5 mb-4">
         {/* Create Lobby Button */}
         <button
           onClick={handleCreateLobby}
-          className="w-full py-4 px-6 bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-400 hover:to-yellow-400 text-zinc-950 font-black text-base uppercase tracking-wider rounded-2xl flex items-center justify-center gap-3 shadow-lg shadow-amber-950/40 transform active:scale-98 transition-all cursor-pointer"
+          disabled={isLoading}
+          className="w-full py-4 px-6 bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-400 hover:to-yellow-400 disabled:opacity-50 text-zinc-950 font-black text-base uppercase tracking-wider rounded-2xl flex items-center justify-center gap-3 shadow-lg shadow-amber-950/40 transform active:scale-98 transition-all cursor-pointer"
         >
-          <PlusCircle className="w-5 h-5 stroke-[2.5]" />
-          <span>Створити лобі</span>
+          {isLoading ? (
+            <Loader2 className="w-5 h-5 animate-spin" />
+          ) : (
+            <>
+              <PlusCircle className="w-5 h-5 stroke-[2.5]" />
+              <span>Створити лобі</span>
+            </>
+          )}
         </button>
 
         {/* Join Lobby Button */}
@@ -201,7 +254,8 @@ function GameApp() {
             setJoinError(null);
             setIsJoinModalOpen(true);
           }}
-          className="w-full py-4 px-6 bg-zinc-900 hover:bg-zinc-800 border-2 border-zinc-700 text-white font-bold text-base uppercase tracking-wider rounded-2xl flex items-center justify-center gap-3 shadow-md transform active:scale-98 transition-all cursor-pointer"
+          disabled={isLoading}
+          className="w-full py-4 px-6 bg-zinc-900 hover:bg-zinc-800 disabled:opacity-50 border-2 border-zinc-700 text-white font-bold text-base uppercase tracking-wider rounded-2xl flex items-center justify-center gap-3 shadow-md transform active:scale-98 transition-all cursor-pointer"
         >
           <LogIn className="w-5 h-5 text-amber-400 stroke-[2.5]" />
           <span>Приєднатись</span>
@@ -221,7 +275,13 @@ function GameApp() {
 
 export default function Home() {
   return (
-    <Suspense fallback={<div className="text-zinc-500 text-center py-20">Завантаження протоколу...</div>}>
+    <Suspense
+      fallback={
+        <div className="text-zinc-500 text-center py-20">
+          Завантаження протоколу...
+        </div>
+      }
+    >
       <GameApp />
     </Suspense>
   );
