@@ -16,7 +16,8 @@ import {
   Flame, 
   ArrowRightLeft,
   LogOut,
-  UserX
+  UserX,
+  Skull
 } from "lucide-react";
 
 interface InGameViewProps {
@@ -24,7 +25,8 @@ interface InGameViewProps {
   currentPlayer: Player;
   onRevealCardToAll: (cardId: string) => void;
   onLeaveRoom: () => void;
-  onKickPlayer: (targetPlayerId: string) => void;
+  onCastVote: (targetPlayerId: string) => void;
+  onDismissExpelled: () => void;
 }
 
 type TabType = "catastrophe" | "table" | "hand" | "kick";
@@ -35,7 +37,8 @@ export function InGameView({
   currentPlayer,
   onRevealCardToAll,
   onLeaveRoom,
-  onKickPlayer,
+  onCastVote,
+  onDismissExpelled,
 }: InGameViewProps) {
   // Mobile active tab: "catastrophe" | "table" | "hand" | "kick"
   const [activeTab, setActiveTab] = useState<TabType>("hand");
@@ -65,10 +68,8 @@ export function InGameView({
     const currentIndex = TABS_ORDER.indexOf(activeTab);
 
     if (isLeftSwipe && currentIndex < TABS_ORDER.length - 1) {
-      // Swipe left -> next tab
       setActiveTab(TABS_ORDER[currentIndex + 1]);
     } else if (isRightSwipe && currentIndex > 0) {
-      // Swipe right -> prev tab
       setActiveTab(TABS_ORDER[currentIndex - 1]);
     }
   };
@@ -255,7 +256,11 @@ export function InGameView({
           )}
           {activeTab === "hand" && renderHandContent()}
           {activeTab === "kick" && (
-            <KickColumn onKickClick={() => setIsKickModalOpen(true)} />
+            <KickColumn
+              room={room}
+              currentPlayer={currentPlayer}
+              onKickClick={() => setIsKickModalOpen(true)}
+            />
           )}
         </div>
       </div>
@@ -279,18 +284,56 @@ export function InGameView({
 
         {/* 4. Найправіша колонка: Кнопка "вигнати з черги до бункера" */}
         <div className="lg:col-span-2 flex flex-col h-full">
-          <KickColumn onKickClick={() => setIsKickModalOpen(true)} />
+          <KickColumn
+            room={room}
+            currentPlayer={currentPlayer}
+            onKickClick={() => setIsKickModalOpen(true)}
+          />
         </div>
       </div>
 
-      {/* Modal for kicking a player */}
+      {/* Modal for casting vote */}
       <KickModal
         isOpen={isKickModalOpen}
         onClose={() => setIsKickModalOpen(false)}
         room={room}
         currentPlayer={currentPlayer}
-        onKickPlayer={onKickPlayer}
+        onCastVote={onCastVote}
       />
+
+      {/* Announcement Modal: When voting concludes and player is expelled */}
+      {room.lastExpelledName && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/90 backdrop-blur-md animate-in fade-in duration-200">
+          <div className="w-full max-w-sm bg-zinc-900 border-2 border-red-600 rounded-3xl p-6 text-center shadow-2xl relative">
+            <div className="w-16 h-16 mx-auto rounded-full bg-red-950/80 border-2 border-red-500 flex items-center justify-center text-red-400 mb-4 shadow-inner">
+              <Skull className="w-8 h-8 text-red-400 animate-bounce" />
+            </div>
+
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-red-950 border border-red-600 text-red-400 text-xs font-mono font-bold uppercase mb-2">
+              РЕЗУЛЬТАТИ ГОЛОСУВАННЯ
+            </div>
+
+            <h3 className="text-2xl font-black text-white mb-2">
+              {room.lastExpelledName}
+            </h3>
+
+            <p className="text-sm text-zinc-300 mb-5 leading-relaxed">
+              Більшість проголосувала проти цього кандидата. Гравець залишається за межами бункера на поверхні!
+            </p>
+
+            <div className="bg-zinc-950/70 border border-zinc-800 rounded-xl p-2.5 mb-5 text-xs text-zinc-400">
+              ✓ Усі попередні голоси скинуто. Можна переходити до наступного раунду.
+            </div>
+
+            <button
+              onClick={onDismissExpelled}
+              className="w-full py-3.5 bg-red-600 hover:bg-red-500 text-white font-black text-sm uppercase tracking-wider rounded-2xl shadow-xl transition-all active:scale-98 cursor-pointer"
+            >
+              Зрозуміло (Продовжити гру)
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

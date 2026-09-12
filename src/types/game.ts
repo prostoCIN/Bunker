@@ -18,4 +18,6 @@ export interface GameRoom {
   players: Player[];
   status: "lobby" | "in_game" | "finished";
   createdAt: number;
+  votes?: Record<string, string>; // voterId -> targetPlayerId
+  lastExpelledName?: string;
 }

@@ -255,13 +255,23 @@ function GameApp() {
     handleRoomSync(updated);
   };
 
-  // Kick Player from queue
-  const handleKickPlayer = async (targetPlayerId: string) => {
-    if (!currentRoom) return;
-    const updated = await roomManager.eliminatePlayer(
+  // Cast Vote for expulsion
+  const handleCastVote = async (targetPlayerId: string) => {
+    if (!currentRoom || !currentPlayer) return;
+    const updated = await roomManager.castVote(
       currentRoom.code,
+      currentPlayer.id,
       targetPlayerId
     );
+    if (updated) {
+      handleRoomSync(updated);
+    }
+  };
+
+  // Dismiss Expelled Announcement
+  const handleDismissExpelled = async () => {
+    if (!currentRoom) return;
+    const updated = await roomManager.clearLastExpelled(currentRoom.code);
     if (updated) {
       handleRoomSync(updated);
     }
@@ -277,7 +287,8 @@ function GameApp() {
         currentPlayer={currentPlayer}
         onRevealCardToAll={handleRevealToAll}
         onLeaveRoom={handleLeaveRoom}
-        onKickPlayer={handleKickPlayer}
+        onCastVote={handleCastVote}
+        onDismissExpelled={handleDismissExpelled}
       />
     );
   }

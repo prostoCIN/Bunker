@@ -190,60 +190,53 @@ export function LobbyScreen({
 
       {/* Bottom Controls */}
       <div className="w-full mt-5 space-y-3">
-        {/* If solo host (1 player): Direct Big Solo Start Button */}
-        {isHost && totalCount === 1 ? (
-          <div className="space-y-2">
+        {/* Main "Ready" Button for current player */}
+        <button
+          onClick={onToggleReady}
+          className={`w-full py-4 rounded-2xl font-bold text-lg flex items-center justify-center gap-3 transition-all transform active:scale-98 shadow-xl cursor-pointer ${
+            currentPlayer.isReady
+              ? "bg-gradient-to-r from-emerald-600 to-green-600 text-white shadow-emerald-900/40 border-2 border-emerald-400"
+              : "bg-gradient-to-r from-zinc-800 to-zinc-700 text-zinc-100 hover:from-zinc-700 hover:to-zinc-600 border border-zinc-600"
+          }`}
+        >
+          {currentPlayer.isReady ? (
+            <>
+              <CheckCircle2 className="w-6 h-6 text-white animate-bounce" />
+              <span>ГОТОВИЙ ({readyCount}/{totalCount})</span>
+            </>
+          ) : (
+            <>
+              <ShieldCheck className="w-6 h-6 text-emerald-400" />
+              <span>Я ГОТОВИЙ ({readyCount}/{totalCount})</span>
+            </>
+          )}
+        </button>
+
+        {/* Host Start Game Button - DISABLED UNTIL ALL PLAYERS ARE READY */}
+        {isHost && (
+          <div className="text-center pt-1 space-y-1.5">
             <button
               onClick={onStartGame}
-              className="w-full py-4 rounded-2xl font-black text-base uppercase tracking-wider flex items-center justify-center gap-2.5 bg-gradient-to-r from-amber-500 via-yellow-500 to-amber-500 hover:from-amber-400 hover:to-yellow-400 text-zinc-950 border-2 border-yellow-300 shadow-xl shadow-amber-950/40 active:scale-98 transition-all cursor-pointer"
-            >
-              <Play className="w-5 h-5 fill-current" />
-              <span>Почати гру (Соло тест)</span>
-            </button>
-            <p className="text-center text-xs text-zinc-400">
-              Ви один у лобі — можна відразу запустити й протестувати руку та картки
-            </p>
-          </div>
-        ) : (
-          <>
-            {/* Main "Ready" Button */}
-            <button
-              onClick={onToggleReady}
-              className={`w-full py-4 rounded-2xl font-bold text-lg flex items-center justify-center gap-3 transition-all transform active:scale-98 shadow-xl cursor-pointer ${
-                currentPlayer.isReady
-                  ? "bg-gradient-to-r from-emerald-600 to-green-600 text-white shadow-emerald-900/40 border-2 border-emerald-400"
-                  : "bg-gradient-to-r from-zinc-800 to-zinc-700 text-zinc-100 hover:from-zinc-700 hover:to-zinc-600 border border-zinc-600"
+              disabled={readyCount < totalCount}
+              className={`w-full py-4 rounded-2xl font-black text-sm uppercase tracking-wider transition-all shadow-xl flex items-center justify-center gap-2 ${
+                readyCount === totalCount
+                  ? "bg-gradient-to-r from-amber-500 via-yellow-500 to-amber-500 hover:from-amber-400 hover:to-yellow-400 text-zinc-950 border-2 border-yellow-300 shadow-amber-950/40 cursor-pointer active:scale-98 animate-pulse"
+                  : "bg-zinc-800/60 border border-zinc-700/60 text-zinc-500 cursor-not-allowed opacity-60"
               }`}
             >
-              {currentPlayer.isReady ? (
-                <>
-                  <CheckCircle2 className="w-6 h-6 text-white animate-bounce" />
-                  <span>ГОТОВИЙ ({readyCount}/{totalCount})</span>
-                </>
-              ) : (
-                <>
-                  <ShieldCheck className="w-6 h-6 text-emerald-400" />
-                  <span>Я ГОТОВИЙ ({readyCount}/{totalCount})</span>
-                </>
-              )}
+              <Flame className="w-5 h-5 fill-current" />
+              <span>
+                {readyCount === totalCount
+                  ? "Зачинити гермодвері & Почати гру"
+                  : `Очікування готовності (${readyCount}/${totalCount})`}
+              </span>
             </button>
-
-            {/* Host action if in group */}
-            {isHost && (
-              <div className="text-center pt-1">
-                <button
-                  onClick={onStartGame}
-                  className="w-full py-3.5 rounded-2xl bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-400 hover:to-yellow-400 text-zinc-950 font-black text-sm uppercase tracking-wider transition-all shadow-lg active:scale-98 cursor-pointer flex items-center justify-center gap-2"
-                >
-                  <Flame className="w-4 h-4 fill-current" />
-                  <span>Зачинити гермодвері & Почати гру</span>
-                </button>
-                <p className="text-[11px] text-zinc-500 mt-1">
-                  Ви — організатор сховища
-                </p>
-              </div>
-            )}
-          </>
+            <p className="text-[11px] text-zinc-400">
+              {readyCount === totalCount
+                ? "Усі учасники готові — можна зачиняти бункер!"
+                : "Старт заблоковано, доки всі учасники лобі не натиснуть «ГОТОВИЙ»"}
+            </p>
+          </div>
         )}
       </div>
     </div>

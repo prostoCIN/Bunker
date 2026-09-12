@@ -254,6 +254,73 @@ export class RoomManager {
     return room;
   }
 
+  async castVote(
+    code: string,
+    voterId: string,
+    targetPlayerId: string
+  ): Promise<GameRoom | null> {
+    const cleanCode = code.trim().toUpperCase();
+    const room = await this.getRoom(cleanCode);
+    if (!room) return null;
+
+    // Active (alive) players
+    const activePlayers = room.players.filter((p) => !p.isEliminated);
+    const isVoterActive = activePlayers.some((p) => p.id === voterId);
+    if (!isVoterActive) return room;
+
+    const votes = { ...(room.votes || {}), [voterId]: targetPlayerId };
+    room.votes = votes;
+
+    // Check if EVERY active player has cast their vote
+    const votedCount = activePlayers.filter((p) => votes[p.id]).length;
+    const allVoted = activePlayers.length > 0 && votedCount >= activePlayers.length;
+
+    if (allVoted) {
+      // Tally votes
+      const tally: Record<string, number> = {};
+      for (const p of activePlayers) {
+        const target = votes[p.id];
+        if (target) {
+          tally[target] = (tally[target] || 0) + 1;
+        }
+      }
+
+      // Find player with the most votes
+      let maxVotes = -1;
+      let mostVotedCandidateId: string | null = null;
+      for (const [candidateId, count] of Object.entries(tally)) {
+        if (count > maxVotes) {
+          maxVotes = count;
+          mostVotedCandidateId = candidateId;
+        }
+      }
+
+      if (mostVotedCandidateId) {
+        const expelled = room.players.find((p) => p.id === mostVotedCandidateId);
+        if (expelled) {
+          expelled.isEliminated = true;
+          room.lastExpelledName = expelled.name;
+        }
+      }
+
+      // Reset all votes after expulsion!
+      room.votes = {};
+    }
+
+    await this.updateRoom(room);
+    return room;
+  }
+
+  async clearLastExpelled(code: string): Promise<GameRoom | null> {
+    const cleanCode = code.trim().toUpperCase();
+    const room = await this.getRoom(cleanCode);
+    if (!room) return null;
+
+    delete room.lastExpelledName;
+    await this.updateRoom(room);
+    return room;
+  }
+
   async updateRoom(room: GameRoom): Promise<GameRoom | null> {
     this.saveLocalRoom(room);
 
