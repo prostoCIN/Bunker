@@ -12,18 +12,19 @@ export class RoomManager {
 
   initChannel(roomCode: string, onUpdate: (room: GameRoom) => void) {
     this.cleanup();
+    const cleanCode = roomCode.trim().toUpperCase();
 
-    // 1. Supabase Realtime channel
+    // 1. Supabase Realtime channel (both Broadcast & Postgres Changes)
     if (supabase && isSupabaseConfigured) {
       this.supabaseChannel = supabase
-        .channel(`room_${roomCode}`)
+        .channel(`room_${cleanCode}`)
         .on(
           "postgres_changes",
           {
             event: "*",
             schema: "public",
             table: "rooms",
-            filter: `code=eq.${roomCode}`,
+            filter: `code=eq.${cleanCode}`,
           },
           (payload) => {
             if (payload.new) {
@@ -33,14 +34,20 @@ export class RoomManager {
             }
           }
         )
+        .on("broadcast", { event: "room_sync" }, ({ payload }) => {
+          if (payload && payload.code === cleanCode) {
+            this.saveLocalRoom(payload as GameRoom);
+            onUpdate(payload as GameRoom);
+          }
+        })
         .subscribe();
     }
 
-    // 2. Local fallback BroadcastChannel (for instant multi-tab sync)
+    // 2. Local fallback BroadcastChannel (for instant multi-tab sync on same machine)
     if (typeof window !== "undefined" && "BroadcastChannel" in window) {
-      this.localChannel = new BroadcastChannel(`bunker_room_${roomCode}`);
+      this.localChannel = new BroadcastChannel(`bunker_room_${cleanCode}`);
       this.localChannel.onmessage = (event) => {
-        if (event.data && event.data.code === roomCode) {
+        if (event.data && event.data.code === cleanCode) {
           onUpdate(event.data);
         }
       };
@@ -73,10 +80,10 @@ export class RoomManager {
           },
         ]);
         if (error) {
-          console.warn("Supabase insert error (fallback to local):", error.message);
+          console.error("Supabase insert error:", error.message);
         }
       } catch (err) {
-        console.warn("Supabase network error:", err);
+        console.error("Supabase network error:", err);
       }
     }
 
@@ -84,36 +91,44 @@ export class RoomManager {
   }
 
   async getRoom(code: string): Promise<GameRoom | null> {
-    // Try Supabase first
+    const cleanCode = code.trim().toUpperCase();
+
+    // 1. Try Supabase first
     if (supabase && isSupabaseConfigured) {
       try {
         const { data, error } = await supabase
           .from("rooms")
           .select("*")
-          .eq("code", code)
-          .single();
+          .eq("code", cleanCode)
+          .maybeSingle();
 
         if (data && !error) {
           const room = data as GameRoom;
           this.saveLocalRoom(room);
           return room;
+        } else if (error) {
+          console.warn("Supabase getRoom error:", error.message);
         }
       } catch (err) {
         console.warn("Supabase fetch error, fallback to local:", err);
       }
     }
 
-    // Fallback to local storage
-    return this.getLocalRoom(code);
+    // 2. Fallback to local storage
+    return this.getLocalRoom(cleanCode);
   }
 
   async joinRoom(code: string, player: Player): Promise<GameRoom | null> {
-    const room = await this.getRoom(code);
+    const cleanCode = code.trim().toUpperCase();
+    const room = await this.getRoom(cleanCode);
     if (!room) return null;
 
     const existingIndex = room.players.findIndex((p) => p.id === player.id);
     if (existingIndex >= 0) {
-      room.players[existingIndex] = { ...room.players[existingIndex], name: player.name };
+      room.players[existingIndex] = {
+        ...room.players[existingIndex],
+        name: player.name,
+      };
     } else {
       room.players.push(player);
     }
@@ -123,7 +138,8 @@ export class RoomManager {
   }
 
   async toggleReady(code: string, playerId: string): Promise<GameRoom | null> {
-    const room = await this.getRoom(code);
+    const cleanCode = code.trim().toUpperCase();
+    const room = await this.getRoom(cleanCode);
     if (!room) return null;
 
     room.players = room.players.map((p) =>
@@ -147,8 +163,17 @@ export class RoomManager {
             status: room.status,
           })
           .eq("code", room.code);
+
+        // Broadcast to all active clients in this room immediately
+        if (this.supabaseChannel) {
+          this.supabaseChannel.send({
+            type: "broadcast",
+            event: "room_sync",
+            payload: room,
+          });
+        }
       } catch (err) {
-        console.warn("Supabase update error:", err);
+        console.error("Supabase update error:", err);
       }
     }
 
