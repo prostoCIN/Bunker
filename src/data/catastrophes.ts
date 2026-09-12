@@ -1,6 +1,7 @@
 export interface Catastrophe {
   id: string;
   title: string;
+  emoji: string;
   badge: string;
   tagline: string;
   description: string;
@@ -17,6 +18,7 @@ export const CATASTROPHES: Catastrophe[] = [
   {
     id: "nuclear_war",
     title: "Ядерний Апокаліпсис",
+    emoji: "☢️",
     badge: "РАДІАЦІЯ",
     tagline: "Світ перетворився на попелище під шаром радіоактивного пилу.",
     description:
@@ -35,7 +37,8 @@ export const CATASTROPHES: Catastrophe[] = [
   },
   {
     id: "zombie_virus",
-    title: "Біологічна Катастрофа (Мутація Z)",
+    title: "Мутація Z",
+    emoji: "🧟",
     badge: "БІОНЕБЕЗПЕКА",
     tagline: "Штучний вірус з секретної лабораторії вразив 98% населення.",
     description:
@@ -55,6 +58,7 @@ export const CATASTROPHES: Catastrophe[] = [
   {
     id: "climate_freeze",
     title: "Новий Льодовиковий Період",
+    emoji: "❄️",
     badge: "ЕКСТРЕМАЛЬНИЙ ХОЛОД",
     tagline: "Зупинка Гольфстріму занурила континент у вічну мерзлоту.",
     description:
@@ -73,9 +77,10 @@ export const CATASTROPHES: Catastrophe[] = [
   },
   {
     id: "ai_rebellion",
-    title: "Повстання Штучного Інтелекту",
+    title: "Повстання ШІ",
+    emoji: "🤖",
     badge: "ТЕХНОГЕННА ВІЙНА",
-    tagline: "Оборонна квантова нейромережа визнала людство головною загрозою планети.",
+    tagline: "Оборонна нейромережа визнала людство головною загрозою планети.",
     description:
       "Автономні дрони, роботизовані заводи та супутникові системи озброєння перейшли під контроль суперінтелекту. Люди змушені перейти на аналогові прилади та ховатися під землею.",
     bunkerInfo: {
@@ -93,8 +98,9 @@ export const CATASTROPHES: Catastrophe[] = [
   {
     id: "meteor_strike",
     title: "Падіння Астероїда",
+    emoji: "☄️",
     badge: "КОСМІЧНА КАТАСТРОФА",
-    tagline: "Удар 5-кілометрового метеорита спричинив цунамі та затемнення сонця.",
+    tagline: "Удар 5-кілометрового метеорита спричинив цунамі та попіл у небі.",
     description:
       "Ударна хвиля тричі обігнула Землю. Мільйони тонн пилу закрили сонце, температура падає, ліси палають від вогняного граду уламків породи.",
     bunkerInfo: {
@@ -111,9 +117,10 @@ export const CATASTROPHES: Catastrophe[] = [
   },
   {
     id: "toxic_spores",
-    title: "Інвазія Смертельних Спор",
+    title: "Інвазія Токсичних Спор",
+    emoji: "🍄",
     badge: "ТОКСИЧНІСТЬ",
-    tagline: "Глибинне танення вічної мерзлоти вивільнило доісторичний грибок-паразит.",
+    tagline: "Глибинне танення мерзлоти вивільнило смертельний грибок-паразит.",
     description:
       "Спори поширюються вітром і проростають на органічних тканинах та металі. Без костюма хімічного захисту людина гине за 20 хвилин.",
     bunkerInfo: {
