@@ -33,9 +33,15 @@ export class RoomManager {
           if (voterChoice) {
             votes[p.id] = voterChoice;
           }
+          const isSpectator = Boolean(p.isSpectator);
           return {
             ...p,
-            playerNumber: typeof p.playerNumber === "number" ? p.playerNumber : (idx + 1),
+            isSpectator,
+            playerNumber: isSpectator
+              ? undefined
+              : typeof p.playerNumber === "number"
+              ? p.playerNumber
+              : idx + 1,
             votedFor: voterChoice,
           };
         })
@@ -76,6 +82,10 @@ export class RoomManager {
       catastrophe._hasRevealedCardInTurn !== undefined
         ? catastrophe._hasRevealedCardInTurn
         : raw.hasRevealedCardInTurn;
+    const roundPresentedPlayerIds =
+      catastrophe._roundPresentedPlayerIds !== undefined
+        ? catastrophe._roundPresentedPlayerIds
+        : raw.roundPresentedPlayerIds || [];
 
     // Clean internal metadata from catastrophe object so it doesn't pollute UI
     const cleanCatastrophe = { ...catastrophe };
@@ -89,6 +99,7 @@ export class RoomManager {
     delete cleanCatastrophe._currentTurnPlayerId;
     delete cleanCatastrophe._turnPhase;
     delete cleanCatastrophe._hasRevealedCardInTurn;
+    delete cleanCatastrophe._roundPresentedPlayerIds;
 
     return {
       ...raw,
@@ -104,6 +115,9 @@ export class RoomManager {
       currentTurnPlayerId: currentTurnPlayerId || undefined,
       turnPhase: turnPhase || "presenting",
       hasRevealedCardInTurn: Boolean(hasRevealedCardInTurn),
+      roundPresentedPlayerIds: Array.isArray(roundPresentedPlayerIds)
+        ? roundPresentedPlayerIds
+        : [],
     };
   }
 
@@ -249,6 +263,7 @@ export class RoomManager {
     const room = await this.getRoom(cleanCode);
     if (!room) return;
 
+    const leavingPlayer = room.players.find((p) => p.id === playerId);
     const remainingPlayers = room.players.filter((p) => p.id !== playerId);
 
     // If 0 players remain in room -> automatically DELETE room from database!
@@ -258,9 +273,10 @@ export class RoomManager {
     }
 
     // If leaving player was host, transfer host to next player
-    const wasHost = room.players.find((p) => p.id === playerId)?.isHost;
+    const wasHost = leavingPlayer?.isHost;
     if (wasHost && remainingPlayers.length > 0) {
-      remainingPlayers[0].isHost = true;
+      const nextHost = remainingPlayers.find((p) => !p.isSpectator) || remainingPlayers[0];
+      nextHost.isHost = true;
     }
 
     // Remove leaving player's vote
@@ -269,6 +285,29 @@ export class RoomManager {
     }
 
     room.players = remainingPlayers;
+
+    // IF GAME IS IN PROGRESS: Recalculate turns and voting!
+    if (room.status === "in_game") {
+      // 1. If the leaving player was the one taking the turn, advance immediately so game never hangs
+      if (room.currentTurnPlayerId === playerId) {
+        const turnRes = this.advanceTurn(room);
+        let skipNote = "";
+        if (turnRes.skippedPlayerNames.length > 0) {
+          skipNote = ` (у ${turnRes.skippedPlayerNames.join(", ")} все відкрито — пропущено)`;
+        }
+        if (turnRes.phaseChangedToVoting) {
+          room.lastActionMessage = `👋 ${leavingPlayer?.name || "Гравець"} покинув гру. Усі гравці виступили в Раунді ${room.roundNumber || 1}! Починається голосування.${skipNote}`;
+        } else if (turnRes.nextPlayer) {
+          room.lastActionMessage = `👋 ${leavingPlayer?.name || "Гравець"} покинув гру. Черга перейшла до #${turnRes.nextPlayer.playerNumber} ${turnRes.nextPlayer.name}!${skipNote}`;
+        }
+      }
+
+      // 2. If in voting phase, check if all remaining eligible voters have voted
+      if (room.turnPhase === "voting") {
+        this.resolveVoting(room);
+      }
+    }
+
     await this.updateRoom(room);
   }
 
@@ -296,23 +335,41 @@ export class RoomManager {
       room.players[existingIndex] = {
         ...existing,
         name: player.name,
-        playerNumber: existing.playerNumber ?? (existingIndex + 1),
       };
-    } else {
-      const existingNumbers = new Set(
-        room.players
-          .map((p) => p.playerNumber)
-          .filter((n): n is number => typeof n === "number")
-      );
-      let nextNum = 1;
-      while (existingNumbers.has(nextNum)) {
-        nextNum++;
-      }
-      room.players.push({
-        ...player,
-        playerNumber: nextNum,
-      });
+      await this.updateRoom(room);
+      return room;
     }
+
+    // If game is in progress, new player joins strictly as a SPECTATOR so balance & turns aren't broken!
+    if (room.status === "in_game") {
+      const spectatorPlayer: Player = {
+        ...player,
+        isHost: false,
+        isReady: false,
+        isSpectator: true,
+        isEliminated: true,
+        cannotVote: true,
+        cards: [],
+        playerNumber: undefined,
+      };
+      room.players.push(spectatorPlayer);
+      await this.updateRoom(room);
+      return room;
+    }
+
+    const existingNumbers = new Set(
+      room.players
+        .map((p) => p.playerNumber)
+        .filter((n): n is number => typeof n === "number")
+    );
+    let nextNum = 1;
+    while (existingNumbers.has(nextNum)) {
+      nextNum++;
+    }
+    room.players.push({
+      ...player,
+      playerNumber: nextNum,
+    });
 
     await this.updateRoom(room);
     return room;
@@ -343,6 +400,7 @@ export class RoomManager {
       playerNumber: typeof p.playerNumber === "number" ? p.playerNumber : (idx + 1),
       cards: p.cards && p.cards.length > 0 ? p.cards : generateCharacterCards(),
       isEliminated: false,
+      isSpectator: false,
       votedFor: undefined,
       hasDoubleVote: false,
       hasImmunity: false,
@@ -359,6 +417,7 @@ export class RoomManager {
     room.roundNumber = 1;
     room.turnPhase = "presenting";
     room.votes = {};
+    room.roundPresentedPlayerIds = [];
     delete room.rpsDuel;
     delete room.lastExpelledName;
     delete room.doorsLocked;
@@ -380,9 +439,9 @@ export class RoomManager {
   }
 
   /**
-   * Advances turn to the next alive player in circular order who still has unrevealed cards.
-   * If a player has all cards revealed, they are automatically skipped.
-   * If all players in the round have presented, transitions to "voting".
+   * Advances turn to the next alive player in deterministic order.
+   * Tracks players who have presented this round in roundPresentedPlayerIds.
+   * If all alive players have presented (or have all cards revealed), transitions to "voting".
    */
   advanceTurn(
     room: GameRoom,
@@ -392,8 +451,14 @@ export class RoomManager {
     phaseChangedToVoting: boolean;
     skippedPlayerNames: string[];
   } {
+    const presented = new Set(room.roundPresentedPlayerIds || []);
+    if (fromPlayerId) {
+      presented.add(fromPlayerId);
+    }
+    room.roundPresentedPlayerIds = Array.from(presented);
+
     const alivePlayers = room.players
-      .filter((p) => !p.isEliminated)
+      .filter((p) => !p.isEliminated && !p.isSpectator && p.cards && p.cards.length > 0)
       .sort((a, b) => (a.playerNumber || 0) - (b.playerNumber || 0));
 
     if (alivePlayers.length === 0) {
@@ -401,23 +466,22 @@ export class RoomManager {
       return { phaseChangedToVoting: false, skippedPlayerNames: [] };
     }
 
-    let startIndex = 0;
-    if (fromPlayerId) {
-      const currentIdx = alivePlayers.findIndex((p) => p.id === fromPlayerId);
-      startIndex = currentIdx !== -1 ? currentIdx + 1 : 0;
-    }
-
     const skippedPlayerNames: string[] = [];
     let nextPlayer: Player | undefined = undefined;
 
-    for (let i = startIndex; i < alivePlayers.length; i++) {
-      const p = alivePlayers[i];
+    for (const p of alivePlayers) {
+      if (presented.has(p.id)) {
+        continue;
+      }
       const hasUnrevealedCards =
         p.cards && p.cards.some((c) => !c.isRevealedToAll);
       if (hasUnrevealedCards) {
         nextPlayer = p;
         break;
       } else {
+        // Player has no unrevealed cards left -> mark as presented and skip
+        presented.add(p.id);
+        room.roundPresentedPlayerIds = Array.from(presented);
         skippedPlayerNames.push(`#${p.playerNumber ?? "?"} ${p.name}`);
       }
     }
@@ -558,6 +622,112 @@ export class RoomManager {
     return room;
   }
 
+  resolveVoting(room: GameRoom): void {
+    const activePlayers = room.players.filter(
+      (p) => !p.isEliminated && !p.isSpectator && p.cards && p.cards.length > 0
+    );
+    const eligibleVoters = activePlayers.filter((p) => !p.cannotVote);
+    const votes = room.votes || {};
+    const votedCount = eligibleVoters.filter((p) => votes[p.id]).length;
+    const allVoted = eligibleVoters.length > 0 && votedCount >= eligibleVoters.length;
+
+    if (!allVoted) return;
+
+    // Tally votes considering double vote and mirror shield
+    const tally: Record<string, number> = {};
+    for (const p of eligibleVoters) {
+      let target = votes[p.id];
+      if (target) {
+        const targetPlayer = room.players.find((tp) => tp.id === target);
+        if (targetPlayer?.hasMirrorShield && targetPlayer.id !== p.id) {
+          target = p.id; // Bounces back
+        }
+        const weight = p.hasDoubleVote ? 2 : 1;
+        tally[target] = (tally[target] || 0) + weight;
+      }
+    }
+
+    // If doors are locked:
+    if (room.doorsLocked) {
+      room.lastExpelledName = "🚪 Броньовані двері заблоковано! У цьому раунді нікого не буде вигнано.";
+      delete room.doorsLocked;
+      room.votes = {};
+      room.players = room.players.map((p) => ({ ...p, votedFor: undefined }));
+      room.roundPresentedPlayerIds = [];
+
+      const nextRound = (room.roundNumber || 1) + 1;
+      room.roundNumber = nextRound;
+      room.turnPhase = "presenting";
+      this.advanceTurn(room);
+      return;
+    }
+
+    // Find highest vote count
+    let maxVotes = -1;
+    let topCandidates: string[] = [];
+    for (const [candidateId, count] of Object.entries(tally)) {
+      if (count > maxVotes) {
+        maxVotes = count;
+        topCandidates = [candidateId];
+      } else if (count === maxVotes) {
+        topCandidates.push(candidateId);
+      }
+    }
+
+    if (topCandidates.length === 1) {
+      // Single winner -> check immunity or gold pass
+      const expelled = room.players.find((p) => p.id === topCandidates[0]);
+      if (expelled) {
+        if (expelled.hasImmunity) {
+          delete expelled.hasImmunity;
+          room.lastExpelledName = `🛡️ #${expelled.playerNumber ?? "?"} ${expelled.name} захищений імунітетом від вигнання!`;
+        } else if (expelled.hasGoldPass && maxVotes < Math.ceil(eligibleVoters.length / 2)) {
+          delete expelled.hasGoldPass;
+          room.lastExpelledName = `🎟️ #${expelled.playerNumber ?? "?"} ${expelled.name} захищений Золотим пропуском!`;
+        } else {
+          expelled.isEliminated = true;
+          expelled.votedFor = undefined;
+          room.lastExpelledName = `${expelled.playerNumber ? `#${expelled.playerNumber} ` : ""}${expelled.name}`;
+        }
+      }
+      // RESET VOTES FOR ALL PLAYERS AND START NEXT ROUND
+      room.votes = {};
+      room.players = room.players.map((p) => ({ ...p, votedFor: undefined }));
+      room.roundPresentedPlayerIds = [];
+
+      const nextRound = (room.roundNumber || 1) + 1;
+      room.roundNumber = nextRound;
+      room.turnPhase = "presenting";
+      const turnRes = this.advanceTurn(room);
+      let skipNote = "";
+      if (turnRes.skippedPlayerNames.length > 0) {
+        skipNote = ` (у ${turnRes.skippedPlayerNames.join(", ")} всі карти відкриті — пропущено)`;
+      }
+      if (turnRes.phaseChangedToVoting) {
+        room.lastActionMessage = `⚖️ Раунд ${nextRound}: Усіх характеристик уже відкрито — одразу відкрито голосування!`;
+      } else if (turnRes.nextPlayer) {
+        room.lastActionMessage = `🎯 Початок Раунду ${nextRound}! Черга ходу: #${turnRes.nextPlayer.playerNumber} ${turnRes.nextPlayer.name}.${skipNote}`;
+      }
+    } else if (topCandidates.length >= 2) {
+      // TIE! Launch Rock-Paper-Scissors duel between tied candidates
+      const p1 = room.players.find((p) => p.id === topCandidates[0]);
+      const p2 = room.players.find((p) => p.id === topCandidates[1]);
+      if (p1 && p2) {
+        room.rpsDuel = {
+          player1Id: p1.id,
+          player2Id: p2.id,
+          player1Name: p1.name,
+          player2Name: p2.name,
+          player1Number: p1.playerNumber,
+          player2Number: p2.playerNumber,
+          choices: {},
+          status: "choosing",
+          roundNumber: 1,
+        };
+      }
+    }
+  }
+
   async castVote(
     code: string,
     voterId: string,
@@ -568,7 +738,9 @@ export class RoomManager {
     if (!room) return null;
 
     // Active (alive) players
-    const activePlayers = room.players.filter((p) => !p.isEliminated);
+    const activePlayers = room.players.filter(
+      (p) => !p.isEliminated && !p.isSpectator && p.cards && p.cards.length > 0
+    );
     const voter = activePlayers.find((p) => p.id === voterId);
     if (!voter || voter.cannotVote) return room;
 
@@ -578,100 +750,7 @@ export class RoomManager {
       p.id === voterId ? { ...p, votedFor: targetPlayerId } : p
     );
 
-    // Check if EVERY active eligible player has cast their vote
-    const eligibleVoters = activePlayers.filter((p) => !p.cannotVote);
-    const votedCount = eligibleVoters.filter((p) => votes[p.id]).length;
-    const allVoted = eligibleVoters.length > 0 && votedCount >= eligibleVoters.length;
-
-    if (allVoted) {
-      // Tally votes considering double vote and mirror shield
-      const tally: Record<string, number> = {};
-      for (const p of eligibleVoters) {
-        let target = votes[p.id];
-        if (target) {
-          const targetPlayer = room.players.find((tp) => tp.id === target);
-          if (targetPlayer?.hasMirrorShield && targetPlayer.id !== p.id) {
-            target = p.id; // Bounces back
-          }
-          const weight = p.hasDoubleVote ? 2 : 1;
-          tally[target] = (tally[target] || 0) + weight;
-        }
-      }
-
-      // If doors are locked:
-      if (room.doorsLocked) {
-        room.lastExpelledName = "🚪 Броньовані двері заблоковано! У цьому раунді нікого не буде вигнано.";
-        delete room.doorsLocked;
-        room.votes = {};
-        room.players = room.players.map((p) => ({ ...p, votedFor: undefined }));
-        await this.updateRoom(room);
-        return room;
-      }
-
-      // Find highest vote count
-      let maxVotes = -1;
-      let topCandidates: string[] = [];
-      for (const [candidateId, count] of Object.entries(tally)) {
-        if (count > maxVotes) {
-          maxVotes = count;
-          topCandidates = [candidateId];
-        } else if (count === maxVotes) {
-          topCandidates.push(candidateId);
-        }
-      }
-
-      if (topCandidates.length === 1) {
-        // Single winner -> check immunity or gold pass
-        const expelled = room.players.find((p) => p.id === topCandidates[0]);
-        if (expelled) {
-          if (expelled.hasImmunity) {
-            delete expelled.hasImmunity;
-            room.lastExpelledName = `🛡️ #${expelled.playerNumber ?? "?"} ${expelled.name} захищений імунітетом від вигнання!`;
-          } else if (expelled.hasGoldPass && maxVotes < Math.ceil(eligibleVoters.length / 2)) {
-            delete expelled.hasGoldPass;
-            room.lastExpelledName = `🎟️ #${expelled.playerNumber ?? "?"} ${expelled.name} захищений Золотим пропуском!`;
-          } else {
-            expelled.isEliminated = true;
-            expelled.votedFor = undefined;
-            room.lastExpelledName = `${expelled.playerNumber ? `#${expelled.playerNumber} ` : ""}${expelled.name}`;
-          }
-        }
-        // RESET VOTES FOR ALL PLAYERS AND START NEXT ROUND
-        room.votes = {};
-        room.players = room.players.map((p) => ({ ...p, votedFor: undefined }));
-
-        const nextRound = (room.roundNumber || 1) + 1;
-        room.roundNumber = nextRound;
-        room.turnPhase = "presenting";
-        const turnRes = this.advanceTurn(room);
-        let skipNote = "";
-        if (turnRes.skippedPlayerNames.length > 0) {
-          skipNote = ` (у ${turnRes.skippedPlayerNames.join(", ")} всі карти відкриті — пропущено)`;
-        }
-        if (turnRes.phaseChangedToVoting) {
-          room.lastActionMessage = `⚖️ Раунд ${nextRound}: Усіх характеристик уже відкрито — одразу відкрито голосування!`;
-        } else if (turnRes.nextPlayer) {
-          room.lastActionMessage = `🎯 Початок Раунду ${nextRound}! Черга ходу: #${turnRes.nextPlayer.playerNumber} ${turnRes.nextPlayer.name}.${skipNote}`;
-        }
-      } else if (topCandidates.length >= 2) {
-        // TIE! Launch Rock-Paper-Scissors duel between tied candidates
-        const p1 = room.players.find((p) => p.id === topCandidates[0]);
-        const p2 = room.players.find((p) => p.id === topCandidates[1]);
-        if (p1 && p2) {
-          room.rpsDuel = {
-            player1Id: p1.id,
-            player2Id: p2.id,
-            player1Name: p1.name,
-            player2Name: p2.name,
-            player1Number: p1.playerNumber,
-            player2Number: p2.playerNumber,
-            choices: {},
-            status: "choosing",
-            roundNumber: 1,
-          };
-        }
-      }
-    }
+    this.resolveVoting(room);
 
     await this.updateRoom(room);
     return room;
@@ -737,6 +816,7 @@ export class RoomManager {
         // Reset votes & remove duel, advance round
         room.votes = {};
         room.players = room.players.map((p) => ({ ...p, votedFor: undefined }));
+        room.roundPresentedPlayerIds = [];
         delete room.rpsDuel;
 
         const nextRound = (room.roundNumber || 1) + 1;
@@ -1106,6 +1186,7 @@ export class RoomManager {
           _currentTurnPlayerId: normalized.currentTurnPlayerId || null,
           _turnPhase: normalized.turnPhase || "presenting",
           _hasRevealedCardInTurn: normalized.hasRevealedCardInTurn || false,
+          _roundPresentedPlayerIds: normalized.roundPresentedPlayerIds || [],
         };
 
         await supabase

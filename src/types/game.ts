@@ -28,6 +28,7 @@ export interface Player {
   joinedAt: number;
   cards?: PlayerCharacterCard[];
   isEliminated?: boolean;
+  isSpectator?: boolean;
   votedFor?: string;
   playerNumber?: number;
   hasDoubleVote?: boolean;
@@ -57,4 +58,6 @@ export interface GameRoom {
   currentTurnPlayerId?: string;
   turnPhase?: "presenting" | "voting";
   hasRevealedCardInTurn?: boolean;
+  roundPresentedPlayerIds?: string[];
 }
+

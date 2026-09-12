@@ -17,13 +17,16 @@ export function ExpelledScreen({
   currentPlayer,
   onLeaveRoom,
 }: ExpelledScreenProps) {
-  const [isSpectating, setIsSpectating] = useState(false);
+  const isSpectatorOnly = Boolean(
+    currentPlayer.isSpectator || !currentPlayer.cards || currentPlayer.cards.length === 0
+  );
+  const [isSpectating, setIsSpectating] = useState(isSpectatorOnly);
   const [spectatorTab, setSpectatorTab] = useState<"table" | "catastrophe">("table");
 
   const isVotingPhase = room.turnPhase === "voting";
 
-  // If player clicked "Спостерігати за бункером"
-  if (isSpectating) {
+  // If player is spectating (or joined mid-game as spectator)
+  if (isSpectating || isSpectatorOnly) {
     return (
       <div className="w-full flex-1 flex flex-col h-full min-h-0 overflow-hidden">
         {/* Modern Spectator Top Bar matching Global Top Bar */}
@@ -40,9 +43,15 @@ export function ExpelledScreen({
               {room.code}
             </span>
 
-            <span className="text-[10px] sm:text-[11px] font-semibold px-2 py-0.5 rounded-md border text-red-400 bg-red-950/50 border-red-500/40 shrink-0">
-              Спостерігач
-            </span>
+            {isSpectatorOnly ? (
+              <span className="text-[10px] sm:text-[11px] font-semibold px-2 py-0.5 rounded-md border text-blue-400 bg-blue-950/50 border-blue-500/40 shrink-0">
+                Глядач
+              </span>
+            ) : (
+              <span className="text-[10px] sm:text-[11px] font-semibold px-2 py-0.5 rounded-md border text-red-400 bg-red-950/50 border-red-500/40 shrink-0">
+                Спостерігач
+              </span>
+            )}
 
             <span className="hidden sm:inline-flex items-center text-[11px] font-mono text-zinc-400 bg-zinc-900/80 border border-zinc-800/80 px-2 py-0.5 rounded-md">
               Раунд #{room.roundNumber || 1}
@@ -59,15 +68,17 @@ export function ExpelledScreen({
             </span>
           </div>
 
-          {/* Right: Back to Expelled Screen + Leave */}
+          {/* Right: Back to Expelled Screen (if expelled) + Leave */}
           <div className="flex items-center gap-2 shrink-0">
-            <button
-              onClick={() => setIsSpectating(false)}
-              className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1 sm:py-1.5 text-xs font-medium text-zinc-300 hover:text-white bg-zinc-900 border border-zinc-800 hover:border-zinc-700 rounded-xl transition-all cursor-pointer"
-            >
-              <ArrowLeft className="w-3.5 h-3.5" />
-              <span>Екран вигнання</span>
-            </button>
+            {!isSpectatorOnly && (
+              <button
+                onClick={() => setIsSpectating(false)}
+                className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1 sm:py-1.5 text-xs font-medium text-zinc-300 hover:text-white bg-zinc-900 border border-zinc-800 hover:border-zinc-700 rounded-xl transition-all cursor-pointer"
+              >
+                <ArrowLeft className="w-3.5 h-3.5" />
+                <span>Екран вигнання</span>
+              </button>
+            )}
 
             <button
               onClick={onLeaveRoom}

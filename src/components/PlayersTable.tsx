@@ -2,6 +2,7 @@
 
 import React from "react";
 import { GameRoom, Player } from "@/types/game";
+import { Eye } from "lucide-react";
 
 interface PlayersTableProps {
   room: GameRoom;
@@ -13,24 +14,22 @@ export function PlayersTable({
   currentPlayer,
 }: PlayersTableProps) {
   const alivePlayers = [...room.players]
-    .filter((p) => !p.isEliminated)
+    .filter((p) => !p.isEliminated && !p.isSpectator && p.cards && p.cards.length > 0)
     .sort((a, b) => (a.playerNumber ?? 0) - (b.playerNumber ?? 0));
 
-  const currentTurnIdx = alivePlayers.findIndex(
-    (p) => p.id === room.currentTurnPlayerId
-  );
+  const spectatorCount = room.players.filter(
+    (p) => p.isSpectator || !p.cards || p.cards.length === 0
+  ).length;
 
-  // Find the index of the next player who has unrevealed cards
-  let nextTurnIdx = -1;
-  if (currentTurnIdx !== -1) {
-    for (let i = currentTurnIdx + 1; i < alivePlayers.length; i++) {
-      const p = alivePlayers[i];
-      if (p.cards && p.cards.some((c) => !c.isRevealedToAll)) {
-        nextTurnIdx = i;
-        break;
-      }
-    }
-  }
+  const presentedSet = new Set(room.roundPresentedPlayerIds || []);
+
+  // Find the next player who has unrevealed cards and hasn't presented yet
+  const nextPlayer = alivePlayers.find(
+    (p) =>
+      p.id !== room.currentTurnPlayerId &&
+      !presentedSet.has(p.id) &&
+      p.cards?.some((c) => !c.isRevealedToAll)
+  );
 
   return (
     <div className="w-full h-full flex flex-col bg-zinc-900/60 border border-zinc-800/80 rounded-3xl p-5 xl:p-6 shadow-xl backdrop-blur-md overflow-hidden min-h-0">
@@ -55,6 +54,12 @@ export function PlayersTable({
         </div>
 
         <div className="flex items-center gap-2 shrink-0">
+          {spectatorCount > 0 && (
+            <span className="text-[11px] font-mono text-zinc-500 flex items-center gap-1 bg-zinc-800/40 border border-zinc-800 px-2 py-0.5 rounded-md">
+              <Eye className="w-3 h-3 text-zinc-400" />
+              <span>{spectatorCount}</span>
+            </span>
+          )}
           <span className="text-[11px] font-mono text-zinc-500">
             {alivePlayers.length} у грі
           </span>
@@ -64,6 +69,7 @@ export function PlayersTable({
       {/* Players list */}
       <div className="flex-1 overflow-y-auto space-y-4 pr-1.5 custom-scrollbar min-h-0">
         {[...room.players]
+          .filter((p) => !p.isSpectator && p.cards && p.cards.length > 0)
           .sort((a, b) => (a.playerNumber ?? 0) - (b.playerNumber ?? 0))
           .map((player) => {
             const isSelf = player.id === currentPlayer.id;
@@ -76,18 +82,16 @@ export function PlayersTable({
               room.turnPhase === "presenting" &&
               !player.isEliminated;
 
-            const playerAliveIdx = alivePlayers.findIndex((p) => p.id === player.id);
             const hasAlreadyPresented =
               room.turnPhase === "presenting" &&
               !player.isEliminated &&
-              currentTurnIdx !== -1 &&
-              playerAliveIdx !== -1 &&
-              playerAliveIdx < currentTurnIdx;
+              presentedSet.has(player.id) &&
+              !isCurrentTurn;
 
             const isNextTurn =
               room.turnPhase === "presenting" &&
               !player.isEliminated &&
-              playerAliveIdx === nextTurnIdx;
+              nextPlayer?.id === player.id;
 
             const allRevealed =
               Boolean(player.cards &&

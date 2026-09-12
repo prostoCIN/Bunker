@@ -27,7 +27,7 @@ export function KickModal({
   if (!isOpen) return null;
 
   const candidates = [...room.players]
-    .filter((p) => !p.isEliminated)
+    .filter((p) => !p.isEliminated && !p.isSpectator && p.cards && p.cards.length > 0)
     .sort((a, b) => (a.playerNumber ?? 0) - (b.playerNumber ?? 0));
 
   const handleVote = (playerId: string) => {

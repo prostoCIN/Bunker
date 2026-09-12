@@ -16,7 +16,9 @@ export function KickColumn({
   onKickClick,
 }: KickColumnProps) {
   const votes = room.votes || {};
-  const activePlayers = room.players.filter((p) => !p.isEliminated);
+  const activePlayers = room.players.filter(
+    (p) => !p.isEliminated && !p.isSpectator && p.cards && p.cards.length > 0
+  );
   const votedCount = activePlayers.filter((p) => votes[p.id]).length;
   const totalActive = activePlayers.length;
 

@@ -356,9 +356,14 @@ function GameApp() {
   // 1. If in room and game is IN PROGRESS:
   if (currentRoom && currentPlayer && currentRoom.status === "in_game") {
     const playerInRoom = currentRoom.players?.find((p) => p.id === currentPlayer.id);
-    const isPlayerEliminated = Boolean(currentPlayer.isEliminated || playerInRoom?.isEliminated);
+    const isPlayerEliminated = Boolean(
+      currentPlayer.isEliminated ||
+      currentPlayer.isSpectator ||
+      playerInRoom?.isEliminated ||
+      playerInRoom?.isSpectator
+    );
 
-    // If this player was expelled from the bunker queue:
+    // If this player was expelled or joined as spectator:
     if (isPlayerEliminated) {
       return (
         <ExpelledScreen
