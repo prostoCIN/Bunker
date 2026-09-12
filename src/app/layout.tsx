@@ -22,7 +22,7 @@ export default function RootLayout({
   return (
     <html lang="uk" className="dark">
       <body className="min-h-screen bg-[#0a0f0d] text-zinc-100 flex flex-col items-center justify-start overflow-x-hidden selection:bg-emerald-500/30 selection:text-emerald-300">
-        <main className="w-full max-w-md md:max-w-5xl lg:max-w-6xl min-h-screen flex flex-col relative px-4 py-4 sm:px-6 transition-all duration-300">
+        <main className="w-full max-w-md md:max-w-5xl lg:max-w-[1700px] min-h-screen flex flex-col relative px-3 py-3 sm:px-6 transition-all duration-300">
           {children}
         </main>
       </body>

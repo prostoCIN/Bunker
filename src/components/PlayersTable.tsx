@@ -81,6 +81,11 @@ export function PlayersTable({ room, currentPlayer }: PlayersTableProps) {
                         Хост
                       </span>
                     )}
+                    {player.isEliminated && (
+                      <span className="text-[10px] font-bold text-red-400 bg-red-950/80 border border-red-500/60 px-2 py-0.5 rounded-full uppercase">
+                        💀 Вигнано
+                      </span>
+                    )}
                   </div>
 
                   <span className="text-[11px] font-mono text-zinc-400">

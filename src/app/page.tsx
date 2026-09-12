@@ -247,11 +247,24 @@ function GameApp() {
   };
 
   // Update room (e.g. reroll catastrophe)
+  // Update room (e.g. reroll catastrophe)
   const handleUpdateRoom = async (updatedFields: Partial<GameRoom>) => {
     if (!currentRoom) return;
     const updated = { ...currentRoom, ...updatedFields };
     await roomManager.updateRoom(updated);
     handleRoomSync(updated);
+  };
+
+  // Kick Player from queue
+  const handleKickPlayer = async (targetPlayerId: string) => {
+    if (!currentRoom) return;
+    const updated = await roomManager.eliminatePlayer(
+      currentRoom.code,
+      targetPlayerId
+    );
+    if (updated) {
+      handleRoomSync(updated);
+    }
   };
 
   // ================= RENDER LOGIC =================
@@ -264,6 +277,7 @@ function GameApp() {
         currentPlayer={currentPlayer}
         onRevealCardToAll={handleRevealToAll}
         onLeaveRoom={handleLeaveRoom}
+        onKickPlayer={handleKickPlayer}
       />
     );
   }

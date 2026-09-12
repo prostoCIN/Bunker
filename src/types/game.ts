@@ -9,6 +9,7 @@ export interface Player {
   avatarSeed: number;
   joinedAt: number;
   cards?: PlayerCharacterCard[];
+  isEliminated?: boolean;
 }
 
 export interface GameRoom {

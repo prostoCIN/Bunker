@@ -238,6 +238,22 @@ export class RoomManager {
     return room;
   }
 
+  async eliminatePlayer(
+    code: string,
+    targetPlayerId: string
+  ): Promise<GameRoom | null> {
+    const cleanCode = code.trim().toUpperCase();
+    const room = await this.getRoom(cleanCode);
+    if (!room) return null;
+
+    room.players = room.players.map((p) =>
+      p.id === targetPlayerId ? { ...p, isEliminated: true } : p
+    );
+
+    await this.updateRoom(room);
+    return room;
+  }
+
   async updateRoom(room: GameRoom): Promise<GameRoom | null> {
     this.saveLocalRoom(room);
 

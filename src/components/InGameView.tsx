@@ -3,7 +3,10 @@
 import React, { useState, useRef } from "react";
 import { GameRoom, Player } from "@/types/game";
 import { PlayerCharacterCard } from "@/data/characterData";
+import { CatastropheColumn } from "./CatastropheColumn";
 import { PlayersTable } from "./PlayersTable";
+import { KickColumn } from "./KickColumn";
+import { KickModal } from "./KickModal";
 import { CardViewScreen } from "./CardViewScreen";
 import { 
   Users, 
@@ -11,9 +14,9 @@ import {
   ChevronRight, 
   Lock, 
   Flame, 
-  ChevronLeft, 
   ArrowRightLeft,
-  LogOut
+  LogOut,
+  UserX
 } from "lucide-react";
 
 interface InGameViewProps {
@@ -21,22 +24,27 @@ interface InGameViewProps {
   currentPlayer: Player;
   onRevealCardToAll: (cardId: string) => void;
   onLeaveRoom: () => void;
+  onKickPlayer: (targetPlayerId: string) => void;
 }
+
+type TabType = "catastrophe" | "table" | "hand" | "kick";
+const TABS_ORDER: TabType[] = ["catastrophe", "table", "hand", "kick"];
 
 export function InGameView({
   room,
   currentPlayer,
   onRevealCardToAll,
   onLeaveRoom,
+  onKickPlayer,
 }: InGameViewProps) {
-  // Mobile active tab: "table" (Стіл) or "hand" (Моя рука)
-  const [activeTab, setActiveTab] = useState<"table" | "hand">("hand");
+  // Mobile active tab: "catastrophe" | "table" | "hand" | "kick"
+  const [activeTab, setActiveTab] = useState<TabType>("hand");
   const [selectedCard, setSelectedCard] = useState<PlayerCharacterCard | null>(null);
+  const [isKickModalOpen, setIsKickModalOpen] = useState(false);
 
   // Touch swipe support for mobile
   const touchStartX = useRef<number | null>(null);
   const touchEndX = useRef<number | null>(null);
-
   const minSwipeDistance = 50;
 
   const onTouchStart = (e: React.TouchEvent) => {
@@ -54,12 +62,14 @@ export function InGameView({
     const isLeftSwipe = distance > minSwipeDistance;
     const isRightSwipe = distance < -minSwipeDistance;
 
-    if (isLeftSwipe) {
-      // Swiped Left -> switch to "hand" if on "table"
-      if (activeTab === "table") setActiveTab("hand");
-    } else if (isRightSwipe) {
-      // Swiped Right -> switch to "table" if on "hand"
-      if (activeTab === "hand") setActiveTab("table");
+    const currentIndex = TABS_ORDER.indexOf(activeTab);
+
+    if (isLeftSwipe && currentIndex < TABS_ORDER.length - 1) {
+      // Swipe left -> next tab
+      setActiveTab(TABS_ORDER[currentIndex + 1]);
+    } else if (isRightSwipe && currentIndex > 0) {
+      // Swipe right -> prev tab
+      setActiveTab(TABS_ORDER[currentIndex - 1]);
     }
   };
 
@@ -76,7 +86,6 @@ export function InGameView({
             onBack={() => setSelectedCard(null)}
             onRevealToAll={(cardId) => {
               onRevealCardToAll(cardId);
-              // keep local selected card updated
               setSelectedCard((prev) =>
                 prev && prev.id === cardId
                   ? { ...prev, isRevealedToAll: true }
@@ -172,39 +181,63 @@ export function InGameView({
 
   return (
     <div className="w-full flex-1 flex flex-col">
-      {/* ================= MOBILE VIEW (<md): TABS & SWIPE ================= */}
-      <div className="md:hidden flex flex-col flex-1">
-        {/* Top Segmented Tab Switcher */}
-        <div className="w-full flex items-center bg-zinc-950 border border-zinc-800 p-1 rounded-2xl mb-3 shadow-inner">
+      {/* ================= MOBILE VIEW (<lg): 4 TABS & SWIPE ================= */}
+      <div className="lg:hidden flex flex-col flex-1">
+        {/* Top 4-Segment Switcher */}
+        <div className="w-full grid grid-cols-4 bg-zinc-950 border border-zinc-800 p-1 rounded-2xl mb-3 shadow-inner gap-1 text-center">
+          <button
+            onClick={() => setActiveTab("catastrophe")}
+            className={`py-2 rounded-xl text-[11px] font-bold flex items-center justify-center gap-1 transition-all cursor-pointer ${
+              activeTab === "catastrophe"
+                ? "bg-zinc-800 text-amber-400 border border-amber-500/40 shadow-md"
+                : "text-zinc-400 hover:text-white"
+            }`}
+          >
+            <Flame className="w-3.5 h-3.5 text-amber-400" />
+            <span className="truncate">Подія</span>
+          </button>
+
           <button
             onClick={() => setActiveTab("table")}
-            className={`flex-1 py-2.5 rounded-xl text-xs font-bold flex items-center justify-center gap-2 transition-all cursor-pointer ${
+            className={`py-2 rounded-xl text-[11px] font-bold flex items-center justify-center gap-1 transition-all cursor-pointer ${
               activeTab === "table"
                 ? "bg-zinc-800 text-emerald-400 border border-emerald-500/40 shadow-md"
                 : "text-zinc-400 hover:text-white"
             }`}
           >
-            <Users className="w-4 h-4" />
-            <span>Стіл гравців ({room.players.length})</span>
+            <Users className="w-3.5 h-3.5 text-emerald-400" />
+            <span className="truncate">Стіл ({room.players.length})</span>
           </button>
 
           <button
             onClick={() => setActiveTab("hand")}
-            className={`flex-1 py-2.5 rounded-xl text-xs font-bold flex items-center justify-center gap-2 transition-all cursor-pointer ${
+            className={`py-2 rounded-xl text-[11px] font-bold flex items-center justify-center gap-1 transition-all cursor-pointer ${
               activeTab === "hand"
-                ? "bg-zinc-800 text-amber-400 border border-amber-500/40 shadow-md"
+                ? "bg-zinc-800 text-emerald-400 border border-emerald-500/40 shadow-md"
                 : "text-zinc-400 hover:text-white"
             }`}
           >
-            <Layers className="w-4 h-4" />
-            <span>Моя рука</span>
+            <Layers className="w-3.5 h-3.5 text-emerald-400" />
+            <span className="truncate">Рука</span>
+          </button>
+
+          <button
+            onClick={() => setActiveTab("kick")}
+            className={`py-2 rounded-xl text-[11px] font-bold flex items-center justify-center gap-1 transition-all cursor-pointer ${
+              activeTab === "kick"
+                ? "bg-red-950/80 text-red-400 border border-red-500/60 shadow-md"
+                : "text-zinc-400 hover:text-red-400"
+            }`}
+          >
+            <UserX className="w-3.5 h-3.5 text-red-400" />
+            <span className="truncate">Вигнати</span>
           </button>
         </div>
 
         {/* Swipe hint */}
         <div className="flex items-center justify-center gap-1 text-[11px] text-zinc-500 font-mono mb-2">
           <ArrowRightLeft className="w-3 h-3" />
-          <span>Свайпайте вліво / вправо для перемикання</span>
+          <span>Свайпайте для перемикання між 4 розділами</span>
         </div>
 
         {/* Touch Container */}
@@ -214,26 +247,50 @@ export function InGameView({
           onTouchEnd={onTouchEnd}
           className="flex-1 flex flex-col"
         >
-          {activeTab === "table" ? (
+          {activeTab === "catastrophe" && (
+            <CatastropheColumn catastrophe={room.catastrophe} />
+          )}
+          {activeTab === "table" && (
             <PlayersTable room={room} currentPlayer={currentPlayer} />
-          ) : (
-            renderHandContent()
+          )}
+          {activeTab === "hand" && renderHandContent()}
+          {activeTab === "kick" && (
+            <KickColumn onKickClick={() => setIsKickModalOpen(true)} />
           )}
         </div>
       </div>
 
-      {/* ================= DESKTOP VIEW (>=md): TWO COLUMNS SIDE-BY-SIDE ================= */}
-      <div className="hidden md:grid md:grid-cols-12 md:gap-6 flex-1 min-h-[85vh]">
-        {/* Left Column: Стіл гравців */}
-        <div className="md:col-span-5 lg:col-span-5 flex flex-col h-full">
+      {/* ================= DESKTOP VIEW (>=lg): 4 COLUMNS FROM LEFT TO RIGHT ================= */}
+      <div className="hidden lg:grid lg:grid-cols-12 lg:gap-4 flex-1 min-h-[85vh]">
+        {/* 1. Найлівіша колонка: Вся інформація про катастрофу */}
+        <div className="lg:col-span-3 flex flex-col h-full">
+          <CatastropheColumn catastrophe={room.catastrophe} />
+        </div>
+
+        {/* 2. Друга колонка: Стіл бункера */}
+        <div className="lg:col-span-4 flex flex-col h-full">
           <PlayersTable room={room} currentPlayer={currentPlayer} />
         </div>
 
-        {/* Right Column: Власна рука гравця (або вибрана картка) */}
-        <div className="md:col-span-7 lg:col-span-7 flex flex-col h-full">
+        {/* 3. Третя колонка: Власна рука гравця (або вибрана картка) */}
+        <div className="lg:col-span-3 flex flex-col h-full">
           {renderHandContent()}
         </div>
+
+        {/* 4. Найправіша колонка: Кнопка "вигнати з черги до бункера" */}
+        <div className="lg:col-span-2 flex flex-col h-full">
+          <KickColumn onKickClick={() => setIsKickModalOpen(true)} />
+        </div>
       </div>
+
+      {/* Modal for kicking a player */}
+      <KickModal
+        isOpen={isKickModalOpen}
+        onClose={() => setIsKickModalOpen(false)}
+        room={room}
+        currentPlayer={currentPlayer}
+        onKickPlayer={onKickPlayer}
+      />
     </div>
   );
 }
