@@ -36,7 +36,7 @@ export function CardViewScreen({
   };
 
   return (
-    <div className="w-full flex flex-col justify-between items-center min-h-[90vh] py-3">
+    <div className="w-full h-full flex flex-col justify-between items-center py-2 overflow-y-auto">
       {/* Top Bar */}
       <div className="w-full flex items-center justify-between mb-4">
         <button
