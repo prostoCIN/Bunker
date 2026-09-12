@@ -9,7 +9,7 @@ interface CatastropheColumnProps {
 
 export function CatastropheColumn({ catastrophe }: CatastropheColumnProps) {
   return (
-    <div className="w-full h-full flex flex-col bg-zinc-900/60 border border-zinc-800/80 rounded-3xl p-5 xl:p-6 shadow-xl backdrop-blur-md overflow-hidden">
+    <div className="w-full h-full flex flex-col bg-zinc-900/60 border border-zinc-800/80 rounded-3xl p-5 xl:p-6 shadow-xl backdrop-blur-md overflow-hidden min-h-0">
       {/* Clean Header */}
       <div className="flex items-center justify-between pb-4 mb-4 border-b border-zinc-800/60 shrink-0">
         <h2 className="text-base font-bold text-white tracking-wide">
@@ -21,7 +21,7 @@ export function CatastropheColumn({ catastrophe }: CatastropheColumnProps) {
       </div>
 
       {/* Spacious Scrollable Content */}
-      <div className="flex-1 overflow-y-auto space-y-6 pr-1.5 custom-scrollbar">
+      <div className="flex-1 overflow-y-auto space-y-6 pr-1.5 custom-scrollbar min-h-0">
         {/* Disaster Hero */}
         <div className="text-left space-y-2">
           <div className="text-3xl xl:text-4xl">

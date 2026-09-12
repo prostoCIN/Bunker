@@ -67,7 +67,7 @@ export function LobbyScreen({
   };
 
   return (
-    <div className="w-full max-w-xl mx-auto flex flex-col justify-between min-h-[90vh] py-4 px-2 space-y-6">
+    <div className="w-full max-w-xl mx-auto flex flex-col justify-between h-full min-h-0 py-3 px-2 overflow-y-auto custom-scrollbar space-y-4">
       {/* Clean Top Bar */}
       <div className="w-full flex items-center justify-between pb-2 border-b border-zinc-800/60">
         <div className="flex items-center gap-2">

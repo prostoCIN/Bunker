@@ -34,9 +34,9 @@ export function ExpelledScreen({
   // If player clicked "Спостерігати за бункером"
   if (isSpectating) {
     return (
-      <div className="w-full flex-1 flex flex-col min-h-[85vh] gap-3">
+      <div className="w-full flex-1 flex flex-col h-full min-h-0 gap-3 overflow-hidden">
         {/* Spectator top bar */}
-        <div className="w-full bg-red-950/80 border border-red-800/80 rounded-2xl px-4 py-2.5 flex items-center justify-between shadow-lg backdrop-blur-md">
+        <div className="w-full bg-red-950/80 border border-red-800/80 rounded-2xl px-4 py-2.5 flex items-center justify-between shadow-lg backdrop-blur-md shrink-0">
           <div className="flex items-center gap-2">
             <span className="w-2.5 h-2.5 rounded-full bg-red-500 animate-ping" />
             <div>
@@ -69,7 +69,7 @@ export function ExpelledScreen({
         </div>
 
         {/* Players table */}
-        <div className="flex-1">
+        <div className="flex-1 min-h-0 overflow-hidden">
           <PlayersTable room={room} currentPlayer={currentPlayer} />
         </div>
       </div>
@@ -77,7 +77,7 @@ export function ExpelledScreen({
   }
 
   return (
-    <div className="w-full flex-1 flex flex-col items-center justify-center py-6 px-3 sm:px-4 max-w-xl mx-auto">
+    <div className="w-full flex-1 flex flex-col items-center justify-center py-4 px-3 sm:px-4 max-w-xl mx-auto h-full min-h-0 overflow-y-auto custom-scrollbar">
       <div className="w-full bg-zinc-900/95 border-2 border-red-600/80 rounded-3xl p-6 sm:p-8 shadow-2xl shadow-red-950/60 backdrop-blur-xl relative overflow-hidden text-center">
         {/* Top ambient red hazard glow */}
         <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-red-600 via-rose-500 to-red-600" />

@@ -102,7 +102,7 @@ export function CardViewScreen({
   const selectedTargetPlayer = room?.players.find((p) => p.id === selectedTargetId);
 
   return (
-    <div className="w-full h-full flex flex-col justify-between items-center py-2 px-1 overflow-y-auto relative">
+    <div className="w-full h-full flex flex-col justify-between items-center py-2 px-1 overflow-y-auto relative min-h-0 custom-scrollbar">
       {/* Top Bar: Minimal Back Button */}
       <div className="w-full flex items-center justify-between mb-3">
         <button

@@ -75,7 +75,7 @@ export function InGameView({
   const renderHandContent = () => {
     if (selectedCard) {
       return (
-        <div className="w-full h-full flex flex-col">
+        <div className="w-full h-full flex flex-col min-h-0 overflow-hidden">
           <CardViewScreen
             card={selectedCard}
             room={room}
@@ -106,7 +106,7 @@ export function InGameView({
     }
 
     return (
-      <div className="w-full flex flex-col h-full bg-zinc-900/60 border border-zinc-800/80 rounded-3xl p-5 xl:p-6 shadow-xl backdrop-blur-md overflow-hidden">
+      <div className="w-full flex flex-col h-full bg-zinc-900/60 border border-zinc-800/80 rounded-3xl p-5 xl:p-6 shadow-xl backdrop-blur-md overflow-hidden min-h-0">
         {/* Hand Header */}
         <div className="flex items-center justify-between pb-4 mb-4 border-b border-zinc-800/60 shrink-0">
           <div className="flex items-center gap-2">
@@ -124,7 +124,7 @@ export function InGameView({
         </div>
 
         {/* List of Parameter Plates with clean flex grid */}
-        <div className="flex-1 overflow-y-auto pr-1.5 custom-scrollbar">
+        <div className="flex-1 overflow-y-auto pr-1.5 custom-scrollbar min-h-0">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-1 2xl:grid-cols-2 gap-2.5">
             {cards.map((card) => (
               <button
@@ -177,7 +177,7 @@ export function InGameView({
   };
 
   return (
-    <div className="w-full flex-1 flex flex-col">
+    <div className="w-full flex-1 flex flex-col h-full min-h-0 overflow-hidden">
       {/* Action Notification Banner */}
       {room.lastActionMessage && (
         <div className="w-full mb-3 py-2.5 px-4 bg-amber-950/85 border border-amber-500/80 rounded-2xl flex items-center justify-between gap-3 shadow-lg shadow-amber-950/40 text-amber-200 animate-in fade-in slide-in-from-top-2 duration-200 shrink-0">
@@ -303,9 +303,9 @@ export function InGameView({
       </div>
 
       {/* ================= 1. MOBILE VIEW (<md, <768px): 4 TABS ================= */}
-      <div className="md:hidden flex flex-col flex-1">
+      <div className="md:hidden flex flex-col flex-1 min-h-0 overflow-hidden">
         {/* Top 4-Segment Switcher */}
-        <div className="w-full grid grid-cols-4 bg-zinc-950/80 border border-zinc-800/60 p-1 rounded-2xl mb-3 shadow-inner gap-1 text-center">
+        <div className="w-full grid grid-cols-4 bg-zinc-950/80 border border-zinc-800/60 p-1 rounded-2xl mb-2.5 shadow-inner gap-1 text-center shrink-0">
           <button
             onClick={() => setActiveTab("catastrophe")}
             className={`py-2 rounded-xl text-xs font-medium flex items-center justify-center gap-1 transition-all cursor-pointer ${
@@ -356,7 +356,7 @@ export function InGameView({
         </div>
 
         {/* Tab Content Container */}
-        <div className="flex-1 flex flex-col">
+        <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
           {activeTab === "catastrophe" && (
             <CatastropheColumn catastrophe={room.catastrophe} />
           )}
@@ -376,17 +376,17 @@ export function InGameView({
       </div>
 
       {/* ================= 2. TABLET VIEW (md to <lg, 768px-1023px): 2x2 GRID ================= */}
-      <div className="hidden md:grid lg:hidden md:grid-cols-2 md:gap-4 flex-1 w-full min-h-[85vh]">
-        <div className="h-[46vh] min-h-[380px] flex flex-col min-h-0">
+      <div className="hidden md:grid lg:hidden md:grid-cols-2 md:grid-rows-2 md:gap-3 flex-1 w-full min-h-0 h-full overflow-hidden">
+        <div className="h-full min-h-0 flex flex-col overflow-hidden">
           <CatastropheColumn catastrophe={room.catastrophe} />
         </div>
-        <div className="h-[46vh] min-h-[380px] flex flex-col min-h-0">
+        <div className="h-full min-h-0 flex flex-col overflow-hidden">
           <PlayersTable room={room} currentPlayer={currentPlayer} />
         </div>
-        <div className="h-[46vh] min-h-[380px] flex flex-col min-h-0">
+        <div className="h-full min-h-0 flex flex-col overflow-hidden">
           {renderHandContent()}
         </div>
-        <div className="h-[46vh] min-h-[380px] flex flex-col min-h-0">
+        <div className="h-full min-h-0 flex flex-col overflow-hidden">
           <KickColumn
             room={room}
             currentPlayer={currentPlayer}
@@ -397,17 +397,17 @@ export function InGameView({
       </div>
 
       {/* ================= 3. LAPTOP & DESKTOP VIEW (>=lg, 1024px+): 4 COLUMNS 100% WIDTH ================= */}
-      <div className="hidden lg:grid lg:grid-cols-12 lg:gap-4 flex-1 w-full min-h-[700px] lg:h-[calc(100vh-2rem)]">
-        <div className="lg:col-span-3 flex flex-col h-full min-h-0">
+      <div className="hidden lg:grid lg:grid-cols-12 lg:gap-4 flex-1 w-full min-h-0 h-full overflow-hidden">
+        <div className="lg:col-span-3 flex flex-col h-full min-h-0 overflow-hidden">
           <CatastropheColumn catastrophe={room.catastrophe} />
         </div>
-        <div className="lg:col-span-4 flex flex-col h-full min-h-0">
+        <div className="lg:col-span-4 flex flex-col h-full min-h-0 overflow-hidden">
           <PlayersTable room={room} currentPlayer={currentPlayer} />
         </div>
-        <div className="lg:col-span-3 flex flex-col h-full min-h-0">
+        <div className="lg:col-span-3 flex flex-col h-full min-h-0 overflow-hidden">
           {renderHandContent()}
         </div>
-        <div className="lg:col-span-2 flex flex-col h-full min-h-0">
+        <div className="lg:col-span-2 flex flex-col h-full min-h-0 overflow-hidden">
           <KickColumn
             room={room}
             currentPlayer={currentPlayer}

@@ -37,7 +37,7 @@ export function KickColumn({
   const hasVoted = Boolean(myVoteTargetId);
 
   return (
-    <div className="w-full h-full flex flex-col justify-between items-center bg-zinc-900/60 border border-zinc-800/80 rounded-3xl p-5 xl:p-6 shadow-xl backdrop-blur-md relative overflow-hidden">
+    <div className="w-full h-full flex flex-col justify-between items-center bg-zinc-900/60 border border-zinc-800/80 rounded-3xl p-5 xl:p-6 shadow-xl backdrop-blur-md relative overflow-hidden min-h-0">
       {/* Clean Header */}
       <div className="w-full text-center pb-4 border-b border-zinc-800/60 shrink-0">
         <h2 className="text-base font-bold text-white tracking-wide">
@@ -46,7 +46,7 @@ export function KickColumn({
       </div>
 
       {/* Spacious Status Info */}
-      <div className="w-full flex-1 flex flex-col justify-center items-center text-center my-6">
+      <div className="w-full flex-1 flex flex-col justify-center items-center text-center my-2 sm:my-4 overflow-y-auto custom-scrollbar min-h-0">
         {!isVotingPhase ? (
           <div className="flex flex-col items-center max-w-xs px-2 animate-in fade-in duration-200">
             <div className="w-12 h-12 rounded-2xl bg-zinc-950/80 border border-zinc-800 text-amber-400 flex items-center justify-center mb-3 shadow-inner">

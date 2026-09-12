@@ -20,9 +20,9 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="uk" className="dark">
-      <body className="min-h-screen bg-[#0a0f0d] text-zinc-100 flex flex-col items-center justify-start overflow-x-hidden selection:bg-emerald-500/30 selection:text-emerald-300">
-        <main className="w-full min-h-screen flex flex-col relative px-2 sm:px-4 lg:px-6 py-2 sm:py-3 transition-all duration-300">
+    <html lang="uk" className="dark h-full">
+      <body className="h-full h-[100dvh] max-h-[100dvh] bg-[#0a0f0d] text-zinc-100 flex flex-col items-center justify-start overflow-hidden selection:bg-emerald-500/30 selection:text-emerald-300">
+        <main className="w-full h-full max-h-[100dvh] flex flex-col relative px-2 sm:px-4 lg:px-6 py-2 sm:py-3 transition-all duration-300 overflow-hidden min-h-0">
           {children}
         </main>
       </body>

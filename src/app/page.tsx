@@ -384,9 +384,9 @@ function GameApp() {
 
   // 3. First Screen (Home)
   return (
-    <div className="w-full max-w-sm mx-auto flex-1 flex flex-col justify-between items-center py-8 min-h-[90vh]">
+    <div className="w-full max-w-sm mx-auto flex-1 flex flex-col justify-between items-center py-4 sm:py-6 h-full min-h-0 overflow-y-auto custom-scrollbar">
       {/* Brand Header */}
-      <div className="w-full flex flex-col items-center text-center mt-6">
+      <div className="w-full flex flex-col items-center text-center mt-2 sm:mt-4">
         <h1 className="text-4xl sm:text-5xl font-black tracking-tight text-white uppercase">
           БУНКЕР
         </h1>
