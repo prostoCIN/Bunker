@@ -8,6 +8,8 @@ export interface RpsDuel {
   player2Id: string;
   player1Name: string;
   player2Name: string;
+  player1Number?: number;
+  player2Number?: number;
   choices: Record<string, RpsChoice>;
   status: "choosing" | "draw" | "resolved";
   roundNumber: number;
@@ -27,6 +29,7 @@ export interface Player {
   cards?: PlayerCharacterCard[];
   isEliminated?: boolean;
   votedFor?: string;
+  playerNumber?: number;
 }
 
 export interface GameRoom {

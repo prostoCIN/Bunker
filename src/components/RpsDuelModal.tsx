@@ -48,7 +48,7 @@ export function RpsDuelModal({
         <div className="my-4 p-3 bg-zinc-950/80 border border-zinc-800 rounded-2xl flex items-center justify-around">
           <div className="flex flex-col items-center">
             <span className="font-bold text-sm text-amber-300">
-              {duel.player1Name}
+              {duel.player1Number ? `#${duel.player1Number} ` : ""}{duel.player1Name}
             </span>
             <span className="text-[11px] text-zinc-500 font-mono mt-0.5">
               {p1Chosen ? "✅ Зробив вибір" : "⏳ Обирає..."}
@@ -59,7 +59,7 @@ export function RpsDuelModal({
 
           <div className="flex flex-col items-center">
             <span className="font-bold text-sm text-amber-300">
-              {duel.player2Name}
+              {duel.player2Number ? `#${duel.player2Number} ` : ""}{duel.player2Name}
             </span>
             <span className="text-[11px] text-zinc-500 font-mono mt-0.5">
               {p2Chosen ? "✅ Зробив вибір" : "⏳ Обирає..."}

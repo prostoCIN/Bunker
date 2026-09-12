@@ -57,7 +57,11 @@ export function KickColumn({
           {/* Clean Choice Tag */}
           {hasVoted && myVoteTargetPlayer && (
             <div className="mt-5 text-xs text-zinc-400 bg-zinc-950/60 border border-zinc-800/60 px-3.5 py-1.5 rounded-full">
-              Ваш голос: <span className="text-white font-semibold">{myVoteTargetPlayer.name}</span>
+              Ваш голос:{" "}
+              <span className="text-white font-semibold">
+                {myVoteTargetPlayer.playerNumber ? `#${myVoteTargetPlayer.playerNumber} ` : ""}
+                {myVoteTargetPlayer.name}
+              </span>
             </div>
           )}
         </div>

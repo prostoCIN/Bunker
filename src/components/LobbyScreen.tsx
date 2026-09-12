@@ -133,23 +133,28 @@ export function LobbyScreen({
             </div>
 
             <div className="flex flex-wrap gap-2">
-              {room.players.map((player) => (
-                <div
-                  key={player.id}
-                  className={`flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs border ${
-                    player.isReady
-                      ? "bg-emerald-950/30 border-emerald-500/30 text-emerald-300 font-medium"
-                      : "bg-zinc-950/40 border-zinc-800/50 text-zinc-400"
-                  }`}
-                >
-                  <span>{player.name} {player.id === currentPlayer.id && "(Ви)"}</span>
-                  {player.isReady ? (
-                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
-                  ) : (
-                    <Clock className="w-3.5 h-3.5 text-zinc-600 shrink-0" />
-                  )}
-                </div>
-              ))}
+              {[...room.players]
+                .sort((a, b) => (a.playerNumber ?? 0) - (b.playerNumber ?? 0))
+                .map((player) => (
+                  <div
+                    key={player.id}
+                    className={`flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs border ${
+                      player.isReady
+                        ? "bg-emerald-950/30 border-emerald-500/30 text-emerald-300 font-medium"
+                        : "bg-zinc-950/40 border-zinc-800/50 text-zinc-400"
+                    }`}
+                  >
+                    <span className="font-mono font-bold text-zinc-400 mr-0.5">
+                      #{player.playerNumber ?? 1}
+                    </span>
+                    <span>{player.name} {player.id === currentPlayer.id && "(Ви)"}</span>
+                    {player.isReady ? (
+                      <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                    ) : (
+                      <Clock className="w-3.5 h-3.5 text-zinc-600 shrink-0" />
+                    )}
+                  </div>
+                ))}
             </div>
           </div>
         </div>

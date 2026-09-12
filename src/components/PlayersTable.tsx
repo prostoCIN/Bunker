@@ -23,27 +23,32 @@ export function PlayersTable({ room, currentPlayer }: PlayersTableProps) {
 
       {/* Players list */}
       <div className="flex-1 overflow-y-auto space-y-4 pr-1.5 custom-scrollbar">
-        {room.players.map((player) => {
-          const isSelf = player.id === currentPlayer.id;
-          const cards = player.cards || [];
-          const revealedCards = cards.filter((c) => c.isRevealedToAll);
-          const hiddenCount = cards.length - revealedCards.length;
+        {[...room.players]
+          .sort((a, b) => (a.playerNumber ?? 0) - (b.playerNumber ?? 0))
+          .map((player) => {
+            const isSelf = player.id === currentPlayer.id;
+            const cards = player.cards || [];
+            const revealedCards = cards.filter((c) => c.isRevealedToAll);
+            const hiddenCount = cards.length - revealedCards.length;
 
-          return (
-            <div
-              key={player.id}
-              className={`p-4 sm:p-5 rounded-2xl border transition-all ${
-                isSelf
-                  ? "bg-zinc-950/60 border-emerald-500/30"
-                  : "bg-zinc-950/40 border-zinc-800/50"
-              }`}
-            >
-              {/* Player Header */}
-              <div className="flex items-center justify-between gap-2 mb-3">
-                <div className="flex items-center gap-2 flex-wrap">
-                  <span className="font-bold text-base text-white">
-                    {player.name}
-                  </span>
+            return (
+              <div
+                key={player.id}
+                className={`p-4 sm:p-5 rounded-2xl border transition-all ${
+                  isSelf
+                    ? "bg-zinc-950/60 border-emerald-500/30"
+                    : "bg-zinc-950/40 border-zinc-800/50"
+                }`}
+              >
+                {/* Player Header */}
+                <div className="flex items-center justify-between gap-2 mb-3">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="font-mono font-bold text-xs bg-zinc-800 text-zinc-300 px-2 py-0.5 rounded-lg shrink-0">
+                      #{player.playerNumber ?? 1}
+                    </span>
+                    <span className="font-bold text-base text-white">
+                      {player.name}
+                    </span>
                   {isSelf && (
                     <span className="text-[10px] font-bold text-emerald-400 bg-emerald-950/50 border border-emerald-500/30 px-2 py-0.5 rounded-md">
                       Ви

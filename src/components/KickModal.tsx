@@ -34,8 +34,10 @@ export function KickModal({
 
   if (!isOpen) return null;
 
-  // Active players in queue (not eliminated)
-  const candidates = room.players.filter((p) => !p.isEliminated);
+  // Active players in queue (not eliminated) sorted by playerNumber
+  const candidates = [...room.players]
+    .filter((p) => !p.isEliminated)
+    .sort((a, b) => (a.playerNumber ?? 0) - (b.playerNumber ?? 0));
   const votes = room.votes || {};
   const votedCount = candidates.filter((p) => votes[p.id]).length;
   const totalActive = candidates.length;
@@ -104,7 +106,10 @@ export function KickModal({
                 }`}
               >
                 <div>
-                  <div className="flex items-center gap-1.5">
+                  <div className="flex items-center gap-2">
+                    <span className="font-mono font-bold text-xs bg-zinc-800 text-zinc-300 px-2 py-0.5 rounded-lg shrink-0">
+                      #{player.playerNumber ?? 1}
+                    </span>
                     <span className="font-bold text-sm">
                       {player.name}
                     </span>
@@ -153,7 +158,7 @@ export function KickModal({
             <p className="text-xs text-zinc-300 mb-4 px-2 leading-relaxed">
               Ви впевнені, що хочете проголосувати за вигнання гравця{" "}
               <b className="text-red-400 font-bold underline">
-                {targetPlayer.name}
+                {targetPlayer.playerNumber ? `#${targetPlayer.playerNumber} ` : ""}{targetPlayer.name}
               </b>
               ? Якщо всі гравці завершать голосування, цей голос може вирішити його долю.
             </p>

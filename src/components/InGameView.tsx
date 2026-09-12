@@ -72,9 +72,14 @@ export function InGameView({
       <div className="w-full flex flex-col h-full bg-zinc-900/60 border border-zinc-800/80 rounded-3xl p-5 xl:p-6 shadow-xl backdrop-blur-md overflow-hidden">
         {/* Hand Header */}
         <div className="flex items-center justify-between pb-4 mb-4 border-b border-zinc-800/60 shrink-0">
-          <h2 className="text-base font-bold text-white tracking-wide">
-            Ваша картка
-          </h2>
+          <div className="flex items-center gap-2">
+            <span className="text-xs font-mono font-bold px-2 py-0.5 rounded-lg bg-zinc-800 border border-zinc-700 text-zinc-300">
+              #{currentPlayer.playerNumber ?? 1}
+            </span>
+            <h2 className="text-base font-bold text-white tracking-wide">
+              {currentPlayer.name}
+            </h2>
+          </div>
 
           <span className="text-[11px] font-mono tracking-wider text-zinc-400 bg-zinc-800/60 px-2.5 py-0.5 rounded-full">
             {revealedCount} / {cards.length} відкрито

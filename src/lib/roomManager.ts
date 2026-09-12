@@ -27,13 +27,14 @@ export class RoomManager {
 
     // 2. Recover votes from players array if present
     const players: Player[] = Array.isArray(raw.players)
-      ? raw.players.map((p: any) => {
+      ? raw.players.map((p: any, idx: number) => {
           const voterChoice = p.votedFor || votes[p.id];
           if (voterChoice) {
             votes[p.id] = voterChoice;
           }
           return {
             ...p,
+            playerNumber: typeof p.playerNumber === "number" ? p.playerNumber : (idx + 1),
             votedFor: voterChoice,
           };
         })
@@ -112,10 +113,15 @@ export class RoomManager {
   async createRoom(hostPlayer: Player): Promise<GameRoom> {
     const code = generateRoomCode();
     const catastrophe = getRandomCatastrophe();
+    const host: Player = {
+      ...hostPlayer,
+      isHost: true,
+      playerNumber: 1,
+    };
     const room: GameRoom = {
       code,
       catastrophe,
-      players: [{ ...hostPlayer, isHost: true }],
+      players: [host],
       status: "lobby",
       createdAt: Date.now(),
       votes: {},
@@ -243,12 +249,26 @@ export class RoomManager {
 
     const existingIndex = room.players.findIndex((p) => p.id === player.id);
     if (existingIndex >= 0) {
+      const existing = room.players[existingIndex];
       room.players[existingIndex] = {
-        ...room.players[existingIndex],
+        ...existing,
         name: player.name,
+        playerNumber: existing.playerNumber ?? (existingIndex + 1),
       };
     } else {
-      room.players.push(player);
+      const existingNumbers = new Set(
+        room.players
+          .map((p) => p.playerNumber)
+          .filter((n): n is number => typeof n === "number")
+      );
+      let nextNum = 1;
+      while (existingNumbers.has(nextNum)) {
+        nextNum++;
+      }
+      room.players.push({
+        ...player,
+        playerNumber: nextNum,
+      });
     }
 
     await this.updateRoom(room);
@@ -275,8 +295,9 @@ export class RoomManager {
 
     const { generateCharacterCards } = await import("@/data/characterData");
 
-    room.players = room.players.map((p) => ({
+    room.players = room.players.map((p, idx) => ({
       ...p,
+      playerNumber: typeof p.playerNumber === "number" ? p.playerNumber : (idx + 1),
       cards: p.cards && p.cards.length > 0 ? p.cards : generateCharacterCards(),
       isEliminated: false,
       votedFor: undefined,
@@ -383,7 +404,7 @@ export class RoomManager {
         if (expelled) {
           expelled.isEliminated = true;
           expelled.votedFor = undefined;
-          room.lastExpelledName = expelled.name;
+          room.lastExpelledName = `${expelled.playerNumber ? `#${expelled.playerNumber} ` : ""}${expelled.name}`;
         }
         // RESET VOTES FOR ALL PLAYERS
         room.votes = {};
@@ -398,6 +419,8 @@ export class RoomManager {
             player2Id: p2.id,
             player1Name: p1.name,
             player2Name: p2.name,
+            player1Number: p1.playerNumber,
+            player2Number: p2.playerNumber,
             choices: {},
             status: "choosing",
             roundNumber: 1,
@@ -461,7 +484,10 @@ export class RoomManager {
           const winChoice = p1Wins ? choiceMap[c1] : choiceMap[c2];
           const loseChoice = p1Wins ? choiceMap[c2] : choiceMap[c1];
 
-          room.lastExpelledName = `${loser.name} (програв дуель: ${winChoice} від ${winner?.name} проти ${loseChoice})`;
+          const loserLabel = loser.playerNumber ? `#${loser.playerNumber} ${loser.name}` : loser.name;
+          const winnerLabel = winner?.playerNumber ? `#${winner.playerNumber} ${winner.name}` : (winner?.name ?? "");
+
+          room.lastExpelledName = `${loserLabel} (програв дуель: ${winChoice} від ${winnerLabel} проти ${loseChoice})`;
         }
 
         // Reset votes & remove duel

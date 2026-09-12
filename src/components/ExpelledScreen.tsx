@@ -135,7 +135,10 @@ export function ExpelledScreen({
             <div className="flex items-center justify-between mb-2">
               <span className="text-[11px] font-mono uppercase text-zinc-400 flex items-center gap-1.5">
                 <Layers className="w-3.5 h-3.5 text-zinc-500" />
-                <span>Ваша особова справа ({currentPlayer.name}):</span>
+                <span>
+                  Ваша особова справа ({currentPlayer.playerNumber ? `#${currentPlayer.playerNumber} ` : ""}
+                  {currentPlayer.name}):
+                </span>
               </span>
               <span className="text-[10px] text-zinc-500 font-mono">
                 Відкрито {revealedCards.length} з {cards.length}
