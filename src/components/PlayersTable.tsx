@@ -1,9 +1,8 @@
 "use client";
 
-import React, { useState } from "react";
+import React from "react";
 import { GameRoom, Player } from "@/types/game";
-import { Users, Flame, ShieldAlert, CheckCircle2, Lock } from "lucide-react";
-import { CatastropheCard } from "./CatastropheCard";
+import { Users, Lock } from "lucide-react";
 
 interface PlayersTableProps {
   room: GameRoom;
@@ -11,8 +10,6 @@ interface PlayersTableProps {
 }
 
 export function PlayersTable({ room, currentPlayer }: PlayersTableProps) {
-  const [showCatastrophe, setShowCatastrophe] = useState(false);
-
   return (
     <div className="w-full flex flex-col h-full bg-zinc-900/90 border border-zinc-800 rounded-3xl p-4 sm:p-5 shadow-2xl backdrop-blur-md">
       {/* Table Header */}
@@ -30,25 +27,10 @@ export function PlayersTable({ room, currentPlayer }: PlayersTableProps) {
             </p>
           </div>
         </div>
-
-        {/* Quick Catastrophe Toggle Button */}
-        <button
-          onClick={() => setShowCatastrophe(!showCatastrophe)}
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-400 hover:bg-amber-500/20 active:scale-95 transition-all text-xs font-semibold cursor-pointer"
-        >
-          <Flame className="w-3.5 h-3.5" />
-          <span>{showCatastrophe ? "Гравці" : "Катастрофа"}</span>
-        </button>
       </div>
 
-      {/* Catastrophe view toggle */}
-      {showCatastrophe ? (
-        <div className="flex-1 overflow-y-auto pr-1 animate-in fade-in duration-150">
-          <CatastropheCard catastrophe={room.catastrophe} />
-        </div>
-      ) : (
-        /* Players list */
-        <div className="flex-1 overflow-y-auto space-y-3 pr-1">
+      {/* Players list */}
+      <div className="flex-1 overflow-y-auto space-y-3 pr-1">
           {room.players.map((player) => {
             const isSelf = player.id === currentPlayer.id;
             const cards = player.cards || [];
@@ -131,7 +113,6 @@ export function PlayersTable({ room, currentPlayer }: PlayersTableProps) {
             );
           })}
         </div>
-      )}
     </div>
   );
 }

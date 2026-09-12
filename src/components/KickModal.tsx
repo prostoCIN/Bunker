@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { GameRoom, Player } from "@/types/game";
-import { UserX, ShieldAlert, X, Check, Users } from "lucide-react";
+import { UserX, ShieldAlert, X, Check, AlertTriangle } from "lucide-react";
 
 interface KickModalProps {
   isOpen: boolean;
@@ -23,10 +23,12 @@ export function KickModal({
   const [selectedTargetId, setSelectedTargetId] = useState<string | null>(
     currentMyVote
   );
+  const [showConfirmPrompt, setShowConfirmPrompt] = useState(false);
 
   useEffect(() => {
     if (isOpen) {
       setSelectedTargetId((room.votes || {})[currentPlayer.id] || null);
+      setShowConfirmPrompt(false);
     }
   }, [isOpen, room.votes, currentPlayer.id]);
 
@@ -38,9 +40,14 @@ export function KickModal({
   const votedCount = candidates.filter((p) => votes[p.id]).length;
   const totalActive = candidates.length;
 
-  const handleConfirmVote = () => {
+  const targetPlayer = selectedTargetId
+    ? room.players.find((p) => p.id === selectedTargetId)
+    : null;
+
+  const handleFinalVote = () => {
     if (selectedTargetId) {
       onCastVote(selectedTargetId);
+      setShowConfirmPrompt(false);
       onClose();
     }
   };
@@ -49,7 +56,10 @@ export function KickModal({
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-sm animate-in fade-in duration-150">
       <div className="w-full max-w-sm bg-zinc-900 border-2 border-red-900/60 rounded-3xl p-5 sm:p-6 shadow-2xl relative">
         <button
-          onClick={onClose}
+          onClick={() => {
+            setShowConfirmPrompt(false);
+            onClose();
+          }}
           className="absolute top-4 right-4 text-zinc-400 hover:text-white p-1 rounded-full bg-zinc-800 cursor-pointer"
         >
           <X className="w-5 h-5" />
@@ -71,7 +81,7 @@ export function KickModal({
 
         {/* Voting rule hint */}
         <div className="bg-zinc-950/80 border border-zinc-800 rounded-xl p-2.5 mb-3 text-[11px] text-zinc-400 leading-tight">
-          ⚖️ Вигнання відбудеться лише тоді, коли **проголосують усі {totalActive} гравців**. Гравець із найбільшою кількістю голосів залишається зовні, а всі голоси скидаються.
+          ⚖️ Вигнання відбудеться, коли <b>проголосують усі {totalActive} гравців</b>. Гравець із найбільшою кількістю голосів залишається зовні бункера.
         </div>
 
         {/* Candidates list */}
@@ -119,15 +129,53 @@ export function KickModal({
           })}
         </div>
 
-        {/* Confirm button */}
+        {/* Action Button: Opens confirmation overlay */}
         <button
-          onClick={handleConfirmVote}
+          onClick={() => setShowConfirmPrompt(true)}
           disabled={!selectedTargetId}
           className="w-full py-3.5 bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-500 hover:to-rose-500 disabled:opacity-40 disabled:pointer-events-none text-white font-black text-sm uppercase tracking-wider rounded-2xl shadow-xl shadow-red-950/50 transition-all active:scale-98 cursor-pointer flex items-center justify-center gap-2"
         >
           <UserX className="w-4 h-4" />
           <span>Віддати голос за вигнання</span>
         </button>
+
+        {/* Confirmation Overlay before final vote */}
+        {showConfirmPrompt && targetPlayer && (
+          <div className="absolute inset-0 bg-zinc-950/95 rounded-3xl p-5 flex flex-col justify-center items-center text-center animate-in fade-in zoom-in-95 duration-150 z-20">
+            <div className="w-14 h-14 rounded-2xl bg-red-950/80 border border-red-600 text-red-400 flex items-center justify-center mb-3 shadow-inner">
+              <AlertTriangle className="w-7 h-7 animate-pulse" />
+            </div>
+
+            <h4 className="text-base font-black text-white mb-1">
+              Підтвердити вигнання?
+            </h4>
+
+            <p className="text-xs text-zinc-300 mb-4 px-2 leading-relaxed">
+              Ви впевнені, що хочете проголосувати за вигнання гравця{" "}
+              <b className="text-red-400 font-bold underline">
+                {targetPlayer.name}
+              </b>
+              ? Якщо всі гравці завершать голосування, цей голос може вирішити його долю.
+            </p>
+
+            <div className="w-full space-y-2">
+              <button
+                onClick={handleFinalVote}
+                className="w-full py-3 bg-red-600 hover:bg-red-500 text-white font-black text-xs uppercase tracking-wider rounded-xl shadow-lg transition-all active:scale-98 cursor-pointer flex items-center justify-center gap-2"
+              >
+                <Check className="w-4 h-4" />
+                <span>Так, вигнати цього гравця</span>
+              </button>
+
+              <button
+                onClick={() => setShowConfirmPrompt(false)}
+                className="w-full py-2.5 bg-zinc-900 hover:bg-zinc-800 border border-zinc-700 text-zinc-300 font-bold text-xs uppercase tracking-wider rounded-xl transition-all cursor-pointer"
+              >
+                Скасувати (Назад до списку)
+              </button>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

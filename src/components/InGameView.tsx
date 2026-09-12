@@ -88,13 +88,6 @@ export function InGameView({
             <span className="text-xs text-zinc-400 font-mono">
               Відкрито: <b className="text-emerald-400">{revealedCount}</b> / {cards.length}
             </span>
-            <button
-              onClick={onLeaveRoom}
-              title="Покинути бункер"
-              className="p-1.5 rounded-lg bg-zinc-950 border border-zinc-800 text-zinc-500 hover:text-red-400 active:scale-95 transition-colors cursor-pointer"
-            >
-              <LogOut className="w-3.5 h-3.5" />
-            </button>
           </div>
         </div>
 
@@ -221,6 +214,7 @@ export function InGameView({
               room={room}
               currentPlayer={currentPlayer}
               onKickClick={() => setIsKickModalOpen(true)}
+              onLeaveRoom={onLeaveRoom}
             />
           )}
         </div>
@@ -249,6 +243,7 @@ export function InGameView({
             room={room}
             currentPlayer={currentPlayer}
             onKickClick={() => setIsKickModalOpen(true)}
+            onLeaveRoom={onLeaveRoom}
           />
         </div>
       </div>
