@@ -233,17 +233,32 @@ function GameApp() {
     }
   };
 
-  // Leave Room (with automatic 0-player deletion)
+  // Leave Room (with automatic 0-player deletion and zero-flicker instant reset)
   const handleLeaveRoom = async () => {
-    if (currentRoom && currentPlayer) {
-      await roomManager.leaveRoom(currentRoom.code, currentPlayer.id);
-    }
+    const roomCode = currentRoom?.code;
+    const playerId = currentPlayer?.id;
+
+    // 1. Immediately cleanup channels and reset local state to prevent any view flash
     roomManager.cleanup();
     localStorage.removeItem("bunker_active_room_code");
     window.history.replaceState(null, "", "/");
     setCurrentRoom(null);
     if (currentPlayer) {
-      setCurrentPlayer({ ...currentPlayer, isHost: false, isReady: false });
+      setCurrentPlayer({
+        ...currentPlayer,
+        isHost: false,
+        isReady: false,
+        isEliminated: false,
+      });
+    }
+
+    // 2. Perform backend leave in background
+    if (roomCode && playerId) {
+      try {
+        await roomManager.leaveRoom(roomCode, playerId);
+      } catch (err) {
+        console.error("Error leaving room:", err);
+      }
     }
   };
 
@@ -340,12 +355,15 @@ function GameApp() {
 
   // 1. If in room and game is IN PROGRESS:
   if (currentRoom && currentPlayer && currentRoom.status === "in_game") {
+    const playerInRoom = currentRoom.players?.find((p) => p.id === currentPlayer.id);
+    const isPlayerEliminated = Boolean(currentPlayer.isEliminated || playerInRoom?.isEliminated);
+
     // If this player was expelled from the bunker queue:
-    if (currentPlayer.isEliminated) {
+    if (isPlayerEliminated) {
       return (
         <ExpelledScreen
           room={currentRoom}
-          currentPlayer={currentPlayer}
+          currentPlayer={playerInRoom || currentPlayer}
           onLeaveRoom={handleLeaveRoom}
         />
       );
