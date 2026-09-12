@@ -1,12 +1,13 @@
 "use client";
 
 import React, { useState } from "react";
-import { GameRoom, Player } from "@/types/game";
+import { GameRoom, Player, RpsChoice } from "@/types/game";
 import { PlayerCharacterCard } from "@/data/characterData";
 import { CatastropheColumn } from "./CatastropheColumn";
 import { PlayersTable } from "./PlayersTable";
 import { KickColumn } from "./KickColumn";
 import { KickModal } from "./KickModal";
+import { RpsDuelModal } from "./RpsDuelModal";
 import { CardViewScreen } from "./CardViewScreen";
 import { 
   Users, 
@@ -26,6 +27,7 @@ interface InGameViewProps {
   onLeaveRoom: () => void;
   onCastVote: (targetPlayerId: string) => void;
   onDismissExpelled: () => void;
+  onMakeRpsChoice: (choice: RpsChoice) => void;
 }
 
 type TabType = "catastrophe" | "table" | "hand" | "kick";
@@ -37,6 +39,7 @@ export function InGameView({
   onLeaveRoom,
   onCastVote,
   onDismissExpelled,
+  onMakeRpsChoice,
 }: InGameViewProps) {
   // Mobile active tab: "catastrophe" | "table" | "hand" | "kick"
   const [activeTab, setActiveTab] = useState<TabType>("hand");
@@ -258,6 +261,15 @@ export function InGameView({
         currentPlayer={currentPlayer}
         onCastVote={onCastVote}
       />
+
+      {/* Rock Paper Scissors Duel Modal on Tied Votes */}
+      {room.rpsDuel && (
+        <RpsDuelModal
+          duel={room.rpsDuel}
+          currentPlayer={currentPlayer}
+          onMakeChoice={onMakeRpsChoice}
+        />
+      )}
 
       {/* Announcement Modal: When voting concludes and player is expelled */}
       {room.lastExpelledName && (

@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, Suspense, useCallback } from "react";
 import { useSearchParams } from "next/navigation";
-import { GameRoom, Player } from "@/types/game";
+import { GameRoom, Player, RpsChoice } from "@/types/game";
 import { LobbyScreen } from "@/components/LobbyScreen";
 import { InGameView } from "@/components/InGameView";
 import { JoinModal } from "@/components/JoinModal";
@@ -277,6 +277,19 @@ function GameApp() {
     }
   };
 
+  // Rock Paper Scissors Choice
+  const handleMakeRpsChoice = async (choice: RpsChoice) => {
+    if (!currentRoom || !currentPlayer) return;
+    const updated = await roomManager.makeRpsChoice(
+      currentRoom.code,
+      currentPlayer.id,
+      choice
+    );
+    if (updated) {
+      handleRoomSync(updated);
+    }
+  };
+
   // ================= RENDER LOGIC =================
 
   // 1. If in room and game is IN PROGRESS:
@@ -289,6 +302,7 @@ function GameApp() {
         onLeaveRoom={handleLeaveRoom}
         onCastVote={handleCastVote}
         onDismissExpelled={handleDismissExpelled}
+        onMakeRpsChoice={handleMakeRpsChoice}
       />
     );
   }

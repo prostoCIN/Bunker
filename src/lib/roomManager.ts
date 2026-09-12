@@ -1,4 +1,4 @@
-import { GameRoom, Player } from "@/types/game";
+import { GameRoom, Player, RpsChoice } from "@/types/game";
 import { getRandomCatastrophe } from "@/data/catastrophes";
 import { generateRoomCode } from "./utils";
 import { supabase, isSupabaseConfigured } from "./supabase";
@@ -285,26 +285,105 @@ export class RoomManager {
         }
       }
 
-      // Find player with the most votes
+      // Find highest vote count
       let maxVotes = -1;
-      let mostVotedCandidateId: string | null = null;
+      let topCandidates: string[] = [];
       for (const [candidateId, count] of Object.entries(tally)) {
         if (count > maxVotes) {
           maxVotes = count;
-          mostVotedCandidateId = candidateId;
+          topCandidates = [candidateId];
+        } else if (count === maxVotes) {
+          topCandidates.push(candidateId);
         }
       }
 
-      if (mostVotedCandidateId) {
-        const expelled = room.players.find((p) => p.id === mostVotedCandidateId);
+      if (topCandidates.length === 1) {
+        // Single winner -> direct expulsion
+        const expelled = room.players.find((p) => p.id === topCandidates[0]);
         if (expelled) {
           expelled.isEliminated = true;
           room.lastExpelledName = expelled.name;
         }
+        room.votes = {};
+      } else if (topCandidates.length >= 2) {
+        // TIE! Launch Rock-Paper-Scissors duel between tied candidates
+        const p1 = room.players.find((p) => p.id === topCandidates[0]);
+        const p2 = room.players.find((p) => p.id === topCandidates[1]);
+        if (p1 && p2) {
+          room.rpsDuel = {
+            player1Id: p1.id,
+            player2Id: p2.id,
+            player1Name: p1.name,
+            player2Name: p2.name,
+            choices: {},
+            status: "choosing",
+            roundNumber: 1,
+          };
+        }
       }
+    }
 
-      // Reset all votes after expulsion!
-      room.votes = {};
+    await this.updateRoom(room);
+    return room;
+  }
+
+  async makeRpsChoice(
+    code: string,
+    playerId: string,
+    choice: RpsChoice
+  ): Promise<GameRoom | null> {
+    const cleanCode = code.trim().toUpperCase();
+    const room = await this.getRoom(cleanCode);
+    if (!room || !room.rpsDuel) return null;
+
+    const duel = room.rpsDuel;
+    if (playerId !== duel.player1Id && playerId !== duel.player2Id) {
+      return room;
+    }
+
+    duel.choices[playerId] = choice;
+
+    const c1 = duel.choices[duel.player1Id];
+    const c2 = duel.choices[duel.player2Id];
+
+    // If both have chosen, resolve outcome
+    if (c1 && c2) {
+      duel.lastChoices = { player1Choice: c1, player2Choice: c2 };
+
+      if (c1 === c2) {
+        // DRAW -> Next round
+        duel.status = "draw";
+        duel.roundNumber += 1;
+        duel.choices = {};
+      } else {
+        const p1Wins =
+          (c1 === "rock" && c2 === "scissors") ||
+          (c1 === "scissors" && c2 === "paper") ||
+          (c1 === "paper" && c2 === "rock");
+
+        const winnerId = p1Wins ? duel.player1Id : duel.player2Id;
+        const loserId = p1Wins ? duel.player2Id : duel.player1Id;
+
+        const winner = room.players.find((p) => p.id === winnerId);
+        const loser = room.players.find((p) => p.id === loserId);
+
+        if (loser) {
+          loser.isEliminated = true;
+          const choiceMap: Record<RpsChoice, string> = {
+            rock: "🪨 Камінь",
+            scissors: "✂️ Ножиці",
+            paper: "📄 Папір",
+          };
+          const winChoice = p1Wins ? choiceMap[c1] : choiceMap[c2];
+          const loseChoice = p1Wins ? choiceMap[c2] : choiceMap[c1];
+
+          room.lastExpelledName = `${loser.name} (програв дуель: ${winChoice} від ${winner?.name} проти ${loseChoice})`;
+        }
+
+        // Reset votes & remove duel
+        room.votes = {};
+        delete room.rpsDuel;
+      }
     }
 
     await this.updateRoom(room);
