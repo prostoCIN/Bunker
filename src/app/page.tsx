@@ -409,7 +409,7 @@ function GameApp() {
     <div className="w-full max-w-sm mx-auto flex-1 flex flex-col justify-between items-center py-4 sm:py-6 h-full min-h-0 overflow-y-auto custom-scrollbar animate-in fade-in duration-300">
       {/* Brand Header */}
       <div className="w-full flex flex-col items-center text-center mt-2 sm:mt-4">
-        <h1 className="text-4xl sm:text-5xl font-black tracking-tight text-white uppercase select-none">
+        <h1 className="text-4xl sm:text-5xl font-black tracking-tight text-yellow-400 uppercase select-none">
           БУНКЕР
         </h1>
         <p className="text-sm text-zinc-400 mt-2.5 max-w-xs leading-relaxed">
@@ -447,7 +447,7 @@ function GameApp() {
         <button
           onClick={handleCreateLobby}
           disabled={isLoading}
-          className="w-full py-4 px-6 bg-white hover:bg-zinc-200 disabled:opacity-50 text-zinc-950 font-bold text-sm uppercase tracking-wider rounded-2xl flex items-center justify-center gap-2 shadow-lg hover:shadow-2xl hover:shadow-white/10 hover:scale-[0.985] active:scale-[0.95] transition-all cursor-pointer"
+          className="w-full py-4 px-6 bg-yellow-400 hover:bg-yellow-300 disabled:opacity-50 text-zinc-950 font-bold text-sm uppercase tracking-wider rounded-2xl flex items-center justify-center gap-2 shadow-lg hover:shadow-2xl hover:shadow-yellow-400/20 hover:scale-[0.985] active:scale-[0.95] transition-all cursor-pointer"
         >
           {isLoading ? (
             <Loader2 className="w-5 h-5 animate-spin" />
