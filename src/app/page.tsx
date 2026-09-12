@@ -335,36 +335,21 @@ function GameApp() {
 
   // 3. First Screen (Home)
   return (
-    <div className="w-full flex-1 flex flex-col justify-between items-center py-6 min-h-[90vh]">
+    <div className="w-full max-w-sm mx-auto flex-1 flex flex-col justify-between items-center py-8 min-h-[90vh]">
       {/* Brand Header */}
-      <div className="w-full flex flex-col items-center text-center mt-4">
-        {/* Network indicator */}
-        <div className="flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-zinc-900 border border-zinc-800 text-[11px] font-mono text-zinc-400 mb-3">
-          {isSupabaseConfigured ? (
-            <>
-              <Wifi className="w-3 h-3 text-emerald-400" />
-              <span className="text-emerald-400">МЕРЕЖА: ОНЛАЙН (SUPABASE)</span>
-            </>
-          ) : (
-            <>
-              <WifiOff className="w-3 h-3 text-amber-400" />
-              <span className="text-amber-400">МЕРЕЖА: ЛОКАЛЬНИЙ РЕЖИМ</span>
-            </>
-          )}
-        </div>
-
-        <h1 className="text-4xl sm:text-5xl font-black tracking-tight text-white uppercase drop-shadow-md">
+      <div className="w-full flex flex-col items-center text-center mt-6">
+        <h1 className="text-4xl sm:text-5xl font-black tracking-tight text-white uppercase">
           БУНКЕР
         </h1>
-        <p className="text-sm text-zinc-400 mt-2 max-w-xs leading-relaxed">
-          Соціально-дискусійна гра на виживання. Доведіть іншим, що саме ви гідні потрапити всередину.
+        <p className="text-sm text-zinc-400 mt-2.5 max-w-xs leading-relaxed">
+          Гра на виживання та переконання. Доведіть, що саме ви гідні потрапити у сховище.
         </p>
       </div>
 
       {/* Center: Player Name Card */}
-      <div className="w-full max-w-sm my-6 bg-zinc-900/90 border border-zinc-800 rounded-3xl p-5 shadow-2xl backdrop-blur-sm">
-        <label className="text-xs font-semibold text-zinc-400 uppercase tracking-wider block mb-2">
-          Ваш позивний у сховищі:
+      <div className="w-full bg-zinc-900/60 border border-zinc-800/80 rounded-3xl p-6 shadow-xl my-auto space-y-3">
+        <label className="text-xs font-mono uppercase tracking-wider text-zinc-500 block">
+          Ваше ім&apos;я
         </label>
         <div className="flex items-center gap-2">
           <input
@@ -372,13 +357,13 @@ function GameApp() {
             value={playerName}
             maxLength={20}
             onChange={(e) => handleNameChange(e.target.value)}
-            placeholder="Введіть ваше ім'я..."
-            className="flex-1 py-3 px-4 bg-zinc-950 border border-zinc-700 focus:border-amber-400 rounded-xl text-white font-medium text-sm outline-none transition-colors"
+            placeholder="Введіть ім'я..."
+            className="flex-1 py-3 px-4 bg-zinc-950/60 border border-zinc-800 focus:border-zinc-500 rounded-xl text-white font-medium text-sm outline-none transition-colors"
           />
           <button
             onClick={handleRandomizeName}
-            title="Згенерувати ім'я"
-            className="p-3 bg-zinc-800 hover:bg-zinc-700 border border-zinc-700 rounded-xl text-zinc-300 hover:text-amber-400 transition-colors active:scale-95 cursor-pointer"
+            title="Згенерувати випадкове ім'я"
+            className="p-3 bg-zinc-800/80 hover:bg-zinc-800 border border-zinc-700/60 rounded-xl text-zinc-300 hover:text-white transition-colors active:scale-95 cursor-pointer"
           >
             <Dices className="w-5 h-5" />
           </button>
@@ -386,19 +371,19 @@ function GameApp() {
       </div>
 
       {/* Bottom: The Two Main Action Buttons */}
-      <div className="w-full max-w-sm flex flex-col gap-3.5 mb-4">
+      <div className="w-full flex flex-col gap-3 mb-4">
         {/* Create Lobby Button */}
         <button
           onClick={handleCreateLobby}
           disabled={isLoading}
-          className="w-full py-4 px-6 bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-400 hover:to-yellow-400 disabled:opacity-50 text-zinc-950 font-black text-base uppercase tracking-wider rounded-2xl flex items-center justify-center gap-3 shadow-lg shadow-amber-950/40 transform active:scale-98 transition-all cursor-pointer"
+          className="w-full py-4 px-6 bg-white hover:bg-zinc-200 disabled:opacity-50 text-zinc-950 font-bold text-sm uppercase tracking-wider rounded-2xl flex items-center justify-center gap-2 shadow-lg active:scale-98 transition-all cursor-pointer"
         >
           {isLoading ? (
             <Loader2 className="w-5 h-5 animate-spin" />
           ) : (
             <>
-              <PlusCircle className="w-5 h-5 stroke-[2.5]" />
-              <span>Створити лобі</span>
+              <PlusCircle className="w-5 h-5" />
+              <span>Створити нову гру</span>
             </>
           )}
         </button>
@@ -410,10 +395,10 @@ function GameApp() {
             setIsJoinModalOpen(true);
           }}
           disabled={isLoading}
-          className="w-full py-4 px-6 bg-zinc-900 hover:bg-zinc-800 disabled:opacity-50 border-2 border-zinc-700 text-white font-bold text-base uppercase tracking-wider rounded-2xl flex items-center justify-center gap-3 shadow-md transform active:scale-98 transition-all cursor-pointer"
+          className="w-full py-4 px-6 bg-zinc-900 hover:bg-zinc-800 disabled:opacity-50 border border-zinc-800 text-white font-semibold text-sm uppercase tracking-wider rounded-2xl flex items-center justify-center gap-2 active:scale-98 transition-all cursor-pointer"
         >
-          <LogIn className="w-5 h-5 text-amber-400 stroke-[2.5]" />
-          <span>Приєднатись</span>
+          <LogIn className="w-5 h-5 text-zinc-400" />
+          <span>Увійти за кодом</span>
         </button>
       </div>
 

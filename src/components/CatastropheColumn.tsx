@@ -2,14 +2,6 @@
 
 import React from "react";
 import { Catastrophe } from "@/data/catastrophes";
-import { 
-  Flame, 
-  Clock, 
-  Package, 
-  Wrench, 
-  ShieldAlert, 
-  AlertOctagon 
-} from "lucide-react";
 
 interface CatastropheColumnProps {
   catastrophe: Catastrophe;
@@ -17,115 +9,92 @@ interface CatastropheColumnProps {
 
 export function CatastropheColumn({ catastrophe }: CatastropheColumnProps) {
   return (
-    <div className="w-full h-full flex flex-col bg-zinc-900/90 border border-zinc-800 rounded-3xl p-4 xl:p-5 shadow-2xl backdrop-blur-md overflow-hidden">
-      {/* Column Header */}
-      <div className="flex items-center justify-between pb-3.5 mb-3.5 border-b border-zinc-800 shrink-0">
-        <div className="flex items-center gap-2">
-          <div className="p-2 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-400 shrink-0">
-            <Flame className="w-4 h-4" />
-          </div>
-          <div className="min-w-0">
-            <h2 className="text-sm xl:text-base font-bold text-white leading-tight truncate">
-              Світ за межами бункера
-            </h2>
-            <p className="text-[11px] text-amber-400 font-mono font-semibold uppercase truncate">
-              {catastrophe.badge}
-            </p>
-          </div>
-        </div>
+    <div className="w-full h-full flex flex-col bg-zinc-900/60 border border-zinc-800/80 rounded-3xl p-5 xl:p-6 shadow-xl backdrop-blur-md overflow-hidden">
+      {/* Clean Header */}
+      <div className="flex items-center justify-between pb-4 mb-4 border-b border-zinc-800/60 shrink-0">
+        <h2 className="text-base font-bold text-white tracking-wide">
+          Катастрофа
+        </h2>
+        <span className="text-[11px] font-mono tracking-widest text-zinc-400 uppercase bg-zinc-800/60 px-2.5 py-0.5 rounded-full">
+          {catastrophe.badge}
+        </span>
       </div>
 
-      {/* Scrollable Content */}
-      <div className="flex-1 overflow-y-auto space-y-3.5 pr-1.5 custom-scrollbar">
-        {/* Disaster Hero Card */}
-        <div className="bg-zinc-950/70 border border-zinc-800 rounded-2xl p-4 text-center">
-          <div className="w-14 h-14 xl:w-16 xl:h-16 mx-auto rounded-2xl bg-zinc-900 border border-zinc-800 flex items-center justify-center text-3xl xl:text-4xl mb-2.5 shadow-inner">
+      {/* Spacious Scrollable Content */}
+      <div className="flex-1 overflow-y-auto space-y-6 pr-1.5 custom-scrollbar">
+        {/* Disaster Hero */}
+        <div className="text-left space-y-2">
+          <div className="text-3xl xl:text-4xl">
             {catastrophe.emoji || "☣️"}
           </div>
-          <h3 className="text-base xl:text-lg font-black text-white leading-snug">
+          <h3 className="text-xl xl:text-2xl font-black text-white leading-tight">
             {catastrophe.title}
           </h3>
-          <p className="text-xs italic text-amber-300/90 mt-1">
+          <p className="text-sm text-zinc-400 italic leading-relaxed">
             «{catastrophe.tagline}»
           </p>
         </div>
 
-        {/* Full Chronicles / Description */}
-        <div className="bg-zinc-950/50 border border-zinc-800/80 rounded-2xl p-3.5 text-xs text-zinc-300 leading-relaxed">
-          <span className="text-zinc-500 font-mono text-[10px] uppercase font-bold block mb-1">
-            Хроніка катастрофи:
-          </span>
+        {/* Narrative Description */}
+        <div className="text-sm text-zinc-300 leading-relaxed font-normal">
           {catastrophe.description}
         </div>
 
-        {/* Bunker Conditions - Adaptive Flex Grid */}
-        <div className="space-y-2">
-          <span className="text-zinc-400 font-mono text-[11px] uppercase font-bold block">
-            Параметри виживання:
-          </span>
+        {/* Bunker Survival Parameters */}
+        <div className="space-y-3 pt-2 border-t border-zinc-800/60">
+          <h4 className="text-xs font-mono uppercase tracking-wider text-zinc-500 font-semibold">
+            Умови в бункері
+          </h4>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2 gap-2 text-xs">
-            <div className="bg-zinc-950/60 p-2.5 rounded-xl border border-zinc-800/80 flex flex-col justify-between">
-              <span className="text-zinc-400 flex items-center gap-1 mb-1 font-medium text-[11px]">
-                <Clock className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
-                Ізоляція:
-              </span>
-              <span className="text-zinc-200 font-bold block">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+            <div className="bg-zinc-950/40 p-3 rounded-2xl border border-zinc-800/50 space-y-1">
+              <span className="text-zinc-500 font-medium block">Ізоляція</span>
+              <span className="text-zinc-100 font-semibold text-sm block">
                 {catastrophe.bunkerInfo.duration}
               </span>
             </div>
 
-            <div className="bg-zinc-950/60 p-2.5 rounded-xl border border-zinc-800/80 flex flex-col justify-between">
-              <span className="text-zinc-400 flex items-center gap-1 mb-1 font-medium text-[11px]">
-                <Package className="w-3.5 h-3.5 text-amber-400 shrink-0" />
-                Провізія:
-              </span>
-              <span className="text-zinc-200 font-bold block">
+            <div className="bg-zinc-950/40 p-3 rounded-2xl border border-zinc-800/50 space-y-1">
+              <span className="text-zinc-500 font-medium block">Запаси їжі</span>
+              <span className="text-zinc-100 font-semibold text-sm block">
                 {catastrophe.bunkerInfo.foodSupply}
               </span>
             </div>
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-1 xl:grid-cols-2 gap-2 text-xs">
-            <div className="bg-zinc-950/60 p-2.5 rounded-xl border border-zinc-800/80">
-              <span className="text-zinc-400 flex items-center gap-1 mb-1 font-medium text-[11px]">
-                <Wrench className="w-3.5 h-3.5 text-sky-400 shrink-0" />
-                Обладнання бункера:
-              </span>
-              <span className="text-zinc-200 font-medium leading-relaxed block">
-                {catastrophe.bunkerInfo.specialEquipment}
-              </span>
-            </div>
+          <div className="bg-zinc-950/40 p-3.5 rounded-2xl border border-zinc-800/50 space-y-1 text-xs">
+            <span className="text-zinc-500 font-medium block">Обладнання</span>
+            <span className="text-zinc-200 text-sm leading-relaxed block font-medium">
+              {catastrophe.bunkerInfo.specialEquipment}
+            </span>
+          </div>
 
-            <div className="bg-red-950/30 p-2.5 rounded-xl border border-red-900/40 text-red-200">
-              <span className="text-red-400 flex items-center gap-1 mb-1 font-bold text-[11px]">
-                <ShieldAlert className="w-3.5 h-3.5 text-red-400 shrink-0" />
-                Прихований ризик бункера:
-              </span>
-              <span className="leading-relaxed block">
-                {catastrophe.bunkerInfo.bunkerRisk}
-              </span>
-            </div>
+          <div className="bg-red-950/20 p-3.5 rounded-2xl border border-red-900/30 space-y-1 text-xs">
+            <span className="text-red-400/80 font-medium block">Прихований ризик</span>
+            <span className="text-zinc-200 text-sm leading-relaxed block font-medium">
+              {catastrophe.bunkerInfo.bunkerRisk}
+            </span>
           </div>
         </div>
 
-        {/* External Threats */}
-        <div className="space-y-1.5 pb-2">
-          <span className="text-zinc-400 font-mono text-[11px] uppercase font-bold flex items-center gap-1">
-            <AlertOctagon className="w-3.5 h-3.5 text-amber-400 shrink-0" />
-            Зовнішні загрози:
-          </span>
-          <div className="flex flex-wrap gap-1.5">
-            {catastrophe.externalThreats.map((threat, idx) => (
-              <span
-                key={idx}
-                className="bg-zinc-800 text-zinc-300 px-2.5 py-1 rounded-lg text-[11px] border border-zinc-700/60 font-medium"
-              >
-                • {threat}
-              </span>
-            ))}
+        {/* Threats */}
+        {catastrophe.externalThreats.length > 0 && (
+          <div className="space-y-2.5 pt-2 border-t border-zinc-800/60">
+            <h4 className="text-xs font-mono uppercase tracking-wider text-zinc-500 font-semibold">
+              Зовнішні загрози
+            </h4>
+            <div className="flex flex-wrap gap-2">
+              {catastrophe.externalThreats.map((threat, idx) => (
+                <span
+                  key={idx}
+                  className="bg-zinc-900/80 text-zinc-300 px-3 py-1.5 rounded-xl text-xs border border-zinc-800/70 font-medium"
+                >
+                  {threat}
+                </span>
+              ))}
+            </div>
           </div>
-        </div>
+        )}
       </div>
     </div>
   );
