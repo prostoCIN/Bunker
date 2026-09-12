@@ -3,13 +3,15 @@
 import React, { useState, useEffect, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { GameRoom, Player } from "@/types/game";
+import { PlayerCharacterCard } from "@/data/characterData";
 import { LobbyScreen } from "@/components/LobbyScreen";
+import { PlayerHand } from "@/components/PlayerHand";
+import { CardViewScreen } from "@/components/CardViewScreen";
 import { JoinModal } from "@/components/JoinModal";
 import { roomManager } from "@/lib/roomManager";
 import { generateRandomName } from "@/lib/utils";
 import { isSupabaseConfigured } from "@/lib/supabase";
 import { 
-  ShieldAlert, 
   LogIn, 
   PlusCircle, 
   Dices, 
@@ -23,6 +25,7 @@ function GameApp() {
   const [playerName, setPlayerName] = useState<string>("");
   const [currentPlayer, setCurrentPlayer] = useState<Player | null>(null);
   const [currentRoom, setCurrentRoom] = useState<GameRoom | null>(null);
+  const [selectedCard, setSelectedCard] = useState<PlayerCharacterCard | null>(null);
   const [isJoinModalOpen, setIsJoinModalOpen] = useState(false);
   const [joinError, setJoinError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -68,6 +71,22 @@ function GameApp() {
     handleNameChange(random);
   };
 
+  const handleRoomSync = (updatedRoom: GameRoom) => {
+    setCurrentRoom(updatedRoom);
+    if (currentPlayer) {
+      const updatedSelf = updatedRoom.players.find((p) => p.id === currentPlayer.id);
+      if (updatedSelf) {
+        setCurrentPlayer(updatedSelf);
+        if (selectedCard && updatedSelf.cards) {
+          const freshCard = updatedSelf.cards.find((c) => c.id === selectedCard.id);
+          if (freshCard) {
+            setSelectedCard(freshCard);
+          }
+        }
+      }
+    }
+  };
+
   // Create Lobby
   const handleCreateLobby = async () => {
     if (!currentPlayer) return;
@@ -83,9 +102,7 @@ function GameApp() {
       setCurrentPlayer(host);
       setCurrentRoom(room);
 
-      roomManager.initChannel(room.code, (updatedRoom) => {
-        setCurrentRoom(updatedRoom);
-      });
+      roomManager.initChannel(room.code, handleRoomSync);
     } finally {
       setIsLoading(false);
     }
@@ -116,9 +133,10 @@ function GameApp() {
         setIsJoinModalOpen(false);
         setJoinError(null);
 
-        roomManager.initChannel(code, (syncedRoom) => {
-          setCurrentRoom(syncedRoom);
-        });
+        const selfInRoom = updatedRoom.players.find((p) => p.id === playerToJoin.id);
+        if (selfInRoom) setCurrentPlayer(selfInRoom);
+
+        roomManager.initChannel(code, handleRoomSync);
       }
     } catch {
       setJoinError("Помилка підключення до лобі. Спробуйте ще раз.");
@@ -135,11 +153,34 @@ function GameApp() {
       currentPlayer.id
     );
     if (updated) {
-      setCurrentRoom(updated);
-      const updatedSelf = updated.players.find((p) => p.id === currentPlayer.id);
-      if (updatedSelf) {
-        setCurrentPlayer(updatedSelf);
+      handleRoomSync(updated);
+    }
+  };
+
+  // Start Game
+  const handleStartGame = async () => {
+    if (!currentRoom) return;
+    setIsLoading(true);
+    try {
+      const updated = await roomManager.startGame(currentRoom.code);
+      if (updated) {
+        handleRoomSync(updated);
       }
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Reveal Card to All
+  const handleRevealToAll = async (cardId: string) => {
+    if (!currentRoom || !currentPlayer) return;
+    const updated = await roomManager.revealCardToAll(
+      currentRoom.code,
+      currentPlayer.id,
+      cardId
+    );
+    if (updated) {
+      handleRoomSync(updated);
     }
   };
 
@@ -147,6 +188,7 @@ function GameApp() {
   const handleLeaveRoom = () => {
     roomManager.cleanup();
     setCurrentRoom(null);
+    setSelectedCard(null);
     if (currentPlayer) {
       setCurrentPlayer({ ...currentPlayer, isHost: false, isReady: false });
     }
@@ -157,10 +199,35 @@ function GameApp() {
     if (!currentRoom) return;
     const updated = { ...currentRoom, ...updatedFields };
     await roomManager.updateRoom(updated);
-    setCurrentRoom(updated);
+    handleRoomSync(updated);
   };
 
-  // Render Lobby Screen if inside room
+  // ================= RENDER LOGIC =================
+
+  // 1. If in room and game is IN PROGRESS:
+  if (currentRoom && currentPlayer && currentRoom.status === "in_game") {
+    // If a specific card was tapped -> Show Card Screen
+    if (selectedCard) {
+      return (
+        <CardViewScreen
+          card={selectedCard}
+          onBack={() => setSelectedCard(null)}
+          onRevealToAll={handleRevealToAll}
+        />
+      );
+    }
+
+    // Else show "Рука гравця" (Player Hand)
+    return (
+      <PlayerHand
+        room={currentRoom}
+        currentPlayer={currentPlayer}
+        onSelectCard={(card) => setSelectedCard(card)}
+      />
+    );
+  }
+
+  // 2. If in room and game is in LOBBY:
   if (currentRoom && currentPlayer) {
     return (
       <LobbyScreen
@@ -169,11 +236,12 @@ function GameApp() {
         onToggleReady={handleToggleReady}
         onLeaveRoom={handleLeaveRoom}
         onUpdateRoom={handleUpdateRoom}
+        onStartGame={handleStartGame}
       />
     );
   }
 
-  // First Screen (Home)
+  // 3. First Screen (Home)
   return (
     <div className="w-full flex-1 flex flex-col justify-between items-center py-6 min-h-[90vh]">
       {/* Brand Header */}

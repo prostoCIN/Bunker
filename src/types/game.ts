@@ -1,4 +1,5 @@
 import { Catastrophe } from "@/data/catastrophes";
+import { PlayerCharacterCard } from "@/data/characterData";
 
 export interface Player {
   id: string;
@@ -7,6 +8,7 @@ export interface Player {
   isReady: boolean;
   avatarSeed: number;
   joinedAt: number;
+  cards?: PlayerCharacterCard[];
 }
 
 export interface GameRoom {

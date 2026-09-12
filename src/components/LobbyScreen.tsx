@@ -22,6 +22,7 @@ interface LobbyScreenProps {
   onToggleReady: () => void;
   onLeaveRoom: () => void;
   onUpdateRoom: (updated: Partial<GameRoom>) => void;
+  onStartGame?: () => void;
 }
 
 export function LobbyScreen({
@@ -30,6 +31,7 @@ export function LobbyScreen({
   onToggleReady,
   onLeaveRoom,
   onUpdateRoom,
+  onStartGame,
 }: LobbyScreenProps) {
   const [copied, setCopied] = useState(false);
   const [copiedLink, setCopiedLink] = useState(false);
@@ -211,8 +213,8 @@ export function LobbyScreen({
               Ви — організатор сховища
             </p>
             <button
-              disabled={readyCount < 1}
-              className="w-full py-3 rounded-xl bg-amber-600 hover:bg-amber-500 disabled:opacity-50 disabled:pointer-events-none text-black font-extrabold text-sm uppercase tracking-wider transition-all shadow-lg active:scale-98 cursor-pointer"
+              onClick={onStartGame}
+              className="w-full py-3.5 rounded-2xl bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-400 hover:to-yellow-400 text-zinc-950 font-black text-sm uppercase tracking-wider transition-all shadow-lg active:scale-98 cursor-pointer"
             >
               Зачинити гермодвері & Почати гру
             </button>

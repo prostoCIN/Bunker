@@ -150,6 +150,48 @@ export class RoomManager {
     return room;
   }
 
+  async startGame(code: string): Promise<GameRoom | null> {
+    const cleanCode = code.trim().toUpperCase();
+    const room = await this.getRoom(cleanCode);
+    if (!room) return null;
+
+    const { generateCharacterCards } = await import("@/data/characterData");
+
+    room.players = room.players.map((p) => ({
+      ...p,
+      cards: p.cards && p.cards.length > 0 ? p.cards : generateCharacterCards(),
+    }));
+    room.status = "in_game";
+
+    await this.updateRoom(room);
+    return room;
+  }
+
+  async revealCardToAll(
+    code: string,
+    playerId: string,
+    cardId: string
+  ): Promise<GameRoom | null> {
+    const cleanCode = code.trim().toUpperCase();
+    const room = await this.getRoom(cleanCode);
+    if (!room) return null;
+
+    room.players = room.players.map((p) => {
+      if (p.id === playerId && p.cards) {
+        return {
+          ...p,
+          cards: p.cards.map((c) =>
+            c.id === cardId ? { ...c, isRevealedToAll: true } : c
+          ),
+        };
+      }
+      return p;
+    });
+
+    await this.updateRoom(room);
+    return room;
+  }
+
   async updateRoom(room: GameRoom): Promise<GameRoom | null> {
     this.saveLocalRoom(room);
 
